@@ -44,14 +44,16 @@ void Allocator::loadRooms(const std::string& file)
 {
     // Read in rooms
     fileio::loadRooms(file);
-    rooms = new Room[roomCount];
+    roomCount = fileio::getNumRooms();
+    //RoomCount goes here - look into DOxygen or auxiliary files - fileio.cpp etc.
+    rooms = new Room[roomCount]; //roomCount uninitialized
 
     totalCapacity = 0;
     int i = 0;
     while (fileio::areMoreRooms()) {
-        i++; 
         rooms[i] = fileio::nextRoom();
         totalCapacity += rooms[i].capacity;
+        i++; 
     }
 }
 
@@ -117,4 +119,10 @@ Room* Allocator::largestOpening()
         }
     }
     return &rooms[index];
+}
+
+Allocator::~Allocator() { //Included destructor for rooms and alpha
+delete[] rooms; //Need to delete any memory taken up by rooms, which includes letters - DELETE ROOMS FIRST
+delete[] alpha; //Need to delete any memory taken up by alpha
+
 }

@@ -42,8 +42,9 @@ Room::~Room()
 
 void Room::addLetter(const Letter& L)
 {
-    letters[letterCount++] = L;
-    count += L.count;
+    
+    letters[letterCount++] = L; //Create new arrayof size +1 and set new element to L
+    count += L.count; //Increment count
 }
 
 int Room::spaceRemaining()
@@ -63,7 +64,7 @@ void Room::clear()
 {
     if (letters != NULL)
 
-        delete letters;
+        delete[] letters;
 }
 
 void Room::copy(const Room& other)
@@ -72,6 +73,10 @@ void Room::copy(const Room& other)
     capacity = other.capacity;
     count = other.count;
     letterCount = other.letterCount;
-    letters = other.letters;
+    letters = new Letter[max_letters]; //In order to copy the array, new memory needs to be allocated - however, this needs to be kept in mind in order to be deleted later.
 
+
+    for (int L = 0; L < other.max_letters; ++L){
+     letters[L] = other.letters[L]; //Copy elements into new array
+}
 }

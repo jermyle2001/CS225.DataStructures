@@ -46,6 +46,7 @@ class Allocator
      */
     void printRooms(std::ostream & stream = std::cout);
 
+    ~Allocator(); //Added deconstructor into allocator - memory is too hidden for standard deconstructor to find
   private:
     /**
      * Creates the array of letters.
