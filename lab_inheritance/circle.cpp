@@ -15,7 +15,7 @@ using cs225::PNG;
 const double PI = 3.141592;
 
 Circle::Circle(const Vector2& pcenter, const HSLAPixel& pcolor, int pradius)
-    : radius_(pradius)
+    : Shape(pcenter, pcolor), radius_(pradius)
 {
     /* Nothing.  See initialization list. */
 }
@@ -98,12 +98,12 @@ void Circle::drawPoints(PNG* canvas, int x, int y) const
 void Circle::draw(PNG* canvas) const
 {
     HSLAPixel& pixel = canvas->getPixel(static_cast<int>(this->center().x()),
-                                 static_cast<int>(this->center().y()));
-    pixel = this->color();
+                                 static_cast<int>(this->center().y())); //Sets pixel to the center of the circle on the canvas
+    pixel = this->color(); //Sets colors of the circle 
 
     int x = 0;
-    int y = this->radius_;
-    int p = 1 - this->radius_;
+    int y = this->radius_; //Sets y to radius of circle
+    int p = 1 - this->radius_; //p = 1-radius (why??? Idk)
     this->drawPoints(canvas, x, y);
 
     while (x < y) {

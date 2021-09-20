@@ -129,8 +129,32 @@ void Image::rotateColor(double degrees){ //Increase hue by "degrees" degrees
  for(unsigned x = 0; x < width(); x++){ //Iterate throughout PNG's width
   for(unsigned y = 0; y < height(); y++){ //Iterate through PNG's height
    HSLAPixel & pixel = getPixel(x, y); //Get pixel information
-   if((pixel.h + degrees) > 360){ //Check to see if hue value exceeds bounds
-    pixel.h = pixel.h + degrees - 360; //Value exceeds bounds after operation. Thus, add together and subtract from 360. Note: degrees % 360 is included to account for cases where degrees > 360
+  /* if((pixel.h + degrees) > 360){ //Check to see if hue value exceeds bounds
+    pixel.h = pixel.h + (degrees % 360) - 360; //Value exceeds bounds after operation. Thus, add together and subtract from 360. Note: degrees % 360 is included to account for cases where degrees > 360
+   } //While degrees > 360 - just in case
+   else{
+    pixel.h = pixel.h + degrees; 
+   }
+*/
+
+//IF YOU DON'T WANT TO DO THE CHECKS, YOU CAN SET A VALUE TO PIXEL.H AND DO THE CHECK IN THE WHILE LOOP
+while(degrees > 360 || degrees < -360){ //Reduce degrees to -360 <= degrees <= 360
+if(degrees < 0)  //If degrees is negative, add 360 until it becomes < -360 but < 0, keeping it negative
+ degrees = degrees + 360;
+if(degrees > 0)
+ degrees = degrees - 360;
+} //End of While Loop
+//Degrees reduced to acceptable range, now add to pixel.h
+if(pixel.h + degrees < 0){ //If degrees is negative BUT still causes pixel.h to fall out of acceptable range...
+ pixel.h = pixel.h + degrees + 360;
+   }
+else{
+ if(pixel.h + degrees > 360){ //If degrees is positive BUT still causes pixel.h to fall out of acceptable range...
+ pixel.h = pixel.h + degrees - 360;
+    }
+else{
+ pixel.h = pixel.h + degrees;
+   }
    }
   }
  }
@@ -177,7 +201,7 @@ int h;
 w = width();
 h = height();
 PNG copy(w, h); //Create empty PNG
-HSLAPixel & pixelcopy = copy.getPixel(w, h); //Get pixel information of
+HSLAPixel & pixelcopy = copy.getPixel(w - 1, h - 1); //Get pixel information of
  for(unsigned x = 0; x < width(); x++){ //Iterate throughout PNG's width
   for(unsigned y = 0; y < height(); y++){ //Iterate through PNG's height
    HSLAPixel & pixel = getPixel(x, y); //Get pixel information of original image
@@ -197,33 +221,6 @@ Two cases:
 2. Factor > 1.0. In this case, the image becomes scaled up. 
 */
 
-
-/*
- for(unsigned i = 0; i < width(); i++){ //Iterate through re-scaled image's dimensions - i iterates through width, j iterates through height
-   y = 0; //Reset y for reiteration throughout height
-  for(unsigned j = 0; j < height(); j++){
-   pixel = getPixel(i, j); //Get pixel reference of rescaled image
-   pixelcopy = getPixel(x, y); 
-
-
-  }
- }
-*/
-
-/*
-if(factor < 1.0) {
- double distance1 = 0;
- double distance2 = 0;
- for(x = 0; x < pixelcopy.width(); x++){ //Iterate throughout original image's dimensions, compare distances, finding nearest neighbor and setting to such
-  for(y = 0; y < pixelcopy.height(); y++){
-   
-
-
-  }
- }
-} */
-
-
 if(factor < 1.0){ //Factor < 1.0. Thus, we can just multiply by factor for every value of x and apply to resized image.
  for(unsigned x = 0; x < copy.width(); x++){
   for(unsigned y = 0; y < copy.height(); y++){
@@ -236,32 +233,17 @@ if(factor < 1.0){ //Factor < 1.0. Thus, we can just multiply by factor for every
   }
  }
 }
-else{ //Factor > 1.0. We multiply by the factor, but need to apply the pixel to multiple pixels
-for(unsigned x = 0; x < copy.width(); x++){
- for(unsigned y = 0; y < copy.height(); y++){
-  HSLAPixel & pixelcopy = copy.getPixel(x, y);
-//Make a case for edge cases
-if(x * factor + 1 <= width() || y * factor + 1 <= height()){
- for(unsigned i = x; i < x * factor + 1; i++){
-   for(unsigned j = y; j < y * factor + 1; j++){
-    HSLAPixel & pixel = getPixel(i, j);
-    pixel.h = pixelcopy.h; //Copy data from original PNG
-    pixel.s = pixelcopy.s; 
-    pixel.l = pixelcopy.l;
-    pixel.a = pixelcopy.a;
-    }
-   }
-}
-else{} //Edge case, so...
- for(unsigned i = x; i < width(); i++){
-   for(unsigned j = y; j < height(); j++){
-    HSLAPixel & pixel = copy.getPixel(i, j);
-    pixel.h = pixelcopy.h; //Copy data from original PNG
-    pixel.s = pixelcopy.s; 
-    pixel.l = pixelcopy.l;
-    pixel.a = pixelcopy.a;
-    }
-   }
+else{
+unsigned x = 0;
+unsigned y = 0;
+ for(unsigned i = 0; i < width(); i++){
+  for(unsigned j = 0; j < height(); j++){
+  HSLAPixel & copypixel = copy.getPixel(i/factor, j/factor); 
+  HSLAPixel & resizepixel = getPixel(i,j);
+  resizepixel.h = copypixel.h;
+  resizepixel.s = copypixel.s;
+  resizepixel.l = copypixel.l;
+  resizepixel.a = copypixel.a;
   }
  }
 }
