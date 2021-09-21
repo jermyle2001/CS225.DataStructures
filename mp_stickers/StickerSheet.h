@@ -7,9 +7,11 @@
 #include "cs225/PNG.h"
 #include "cs225/HSLAPixel.h"
 #include "Image.h"
+#include <iostream>
 #include <vector>
 
 using namespace std;
+
 
 class StickerSheet
 {
@@ -28,9 +30,9 @@ class StickerSheet
   Image render() const;
 
  private:
-  vector <Image*> svector (); //Declare a vector for storing pointers
-  vector <unsigned int> x (); //Declare vectors for x and y coordinates
-  vector <unsigned int> y (); //In order to maintain where to print images
-  Image baseImage(); 	      //We also need to include a base image to 
+  std::vector<Image*> svector; //Declare a vector for storing pointers
+  vector<unsigned int> x_val; //Declare vectors for x and y coordinates
+  vector<unsigned int> y_val; //In order to maintain where to print images
+  Image baseImage; 	      //We also need to include a base image to 
 			      //print on. 
 };
