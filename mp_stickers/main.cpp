@@ -26,13 +26,6 @@ int main() {
   std::cout << "Files have been read. Writing to test files..." << std::endl;
   std::cout << "Attempting to create baseimage..." << std::endl;
 
-  sticker1.writeToFile("test1.png");
-  sticker2.writeToFile("test2.png");
-  sticker3.writeToFile("test3.png");
-  baseimage.writeToFile("basetest.png");
-
-  std::cout << "Images written to test files." << std::endl;
-
   Image & baseimageref = baseimage;
   StickerSheet CanIGoHome(baseimageref, 3);
 

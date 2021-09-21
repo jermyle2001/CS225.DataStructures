@@ -34,8 +34,15 @@ TEST_CASE("StickerSheet::changeMaxStickers() does not discard stickers when resi
   Image alma; alma.readFromFile("tests/alma.png");
   Image i;    i.readFromFile("tests/i.png");
 
+std::cout << "Case 2: Creating StickerSheet - capacity = 5" << std::endl;
+
   StickerSheet sheet(alma, 5);
+
+std::cout << "Case 2: Adding Sticker..." << std::endl;
+
   sheet.addSticker(i, 20, 200);
+
+std::cout << "Case 2: Changing Max Stickers to 7..." << std::endl;
 
   sheet.changeMaxStickers(7);
 

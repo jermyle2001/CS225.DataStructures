@@ -7,348 +7,250 @@ using std::vector;
 using cs225::HSLAPixel;
 using cs225::PNG;
 
-
-//Constructors and Destructor------------------------------------------------
-StickerSheet::StickerSheet(const Image & picture, unsigned max){
-/*
-  Intialize w a deep copy of the base picture and ability to hold a 
-  max # of stickers(Image) with indices 0 through max - 1.
-*/
-
-/*
-  1. We need to resize our vectors svector, x, and y to accomodate for the
-     changing size of our array.
-     -Achieve using resize function of vector
-*/
-  x_val.resize(max);
-  svector.resize(max);
-  y_val.resize(max);
-/*
-  2. Next, we need to store a deep copy of the base image, meaning that 
-     we need to copy the image using its reference
-*/
-  unsigned w = picture.width(); //Store picture width/heights for use in resize
-  unsigned h = picture.height();
-  baseImage.resize(w, h);       //Resize base image to fit dimensions of image
-				//being copied
-  for(unsigned i = 0; i < w; i++){ //Iterate throughout image's width
-   for(unsigned j = 0; j < h; j++){ //Iterate throughout image's height
-    HSLAPixel & pixel = baseImage.getPixel(i,j); /* 
-						    Create reference and 
-						    getPixel information
-						    to store on baseImage
-						 */
-    pixel = picture.getPixel(i,j);  //Copy pixels onto baseImage via reference
-   }
+StickerSheet::StickerSheet(const Image &picture, unsigned max){
+ svector.resize(max);
+ svector.clear();
+ x_val.resize(max);
+ y_val.resize(max);
+ std::cout << "svector.size() = " << svector.size() << std::endl;
+ unsigned w = picture.width();
+ unsigned h = picture.height();
+ baseImage.resize(w, h);
+ for(unsigned i = 0; i < w; i++){
+  for(unsigned j = 0; j < h; j++){
+   HSLAPixel &pixel = baseImage.getPixel(i, j);
+   pixel = picture.getPixel(i, j);
   }
+ }
 } //End of constructor
 
-StickerSheet::~StickerSheet(){ //NOTE GET RID OF X Y VECTOR TOO
-//We need to delete the pointers on the inside of each element in the vector
-//Utilise a for loop
- for(unsigned i = 0; i < svector.size(); i++){
-  delete svector[i];
- }
-}
-
-StickerSheet::StickerSheet(const StickerSheet & other){
- /*
-	We want to make a copy of the StickerSheet INDEPENDENT of the
-	StickerSheet referenced as "other". Find constraints and copy
-	over.
- */
-//1. Find vector sizes for each of our vectors and resize
-
-  x_val.resize(other.svector.size());
-  svector.resize(other.svector.size());
-  y_val.resize(other.svector.size());
-  
-//2. Resize baseImage to fit the baseImage passed through
-  
-  unsigned w = other.baseImage.width(); //Find width and height, store in vars
-  unsigned h = other.baseImage.height();
-  baseImage.resize(w, h);
-
-//3. Copy the base image using a reference to each pixel and iteration
-
-  for(unsigned i = 0; i < w; i++){
-   for(unsigned j = 0; j < h; j++){ 
-    HSLAPixel & pixel = baseImage.getPixel(i,j); //Reference pixel on baseImage
-    pixel = other.baseImage.getPixel(i,j); //Get data on other Image, copy 
-   }
+StickerSheet::~StickerSheet(){
+ unsigned s = svector.size();
+ for(unsigned i = s; i >= 0 ; i--){
+  if(svector[i] != NULL){
+   delete svector[i];
+   svector.pop_back();
   }
+ }
+} //End of deconstructor
 
-/*
-- 4. 
-- Now we want to copy the images and elements of our vectors into the copy
-- vectors. We achieve this by iterating throughout the vector and using for
-- loops.
-*/
-
-  for(unsigned i = 0; i < other.svector.size(); i++){ //Iterate throughout vector
-   svector[i] = new Image; //Allocate memory for new image, store pointer in 
-			   // vector
-
-   //Next, we need to resize the image to be consistent w other.
-   w = other.svector[i]->width(); //Store values of height and widths of images
-   h = other.svector[i]->height(); //That are being passed through
-   svector[i]->resize(w, h); //Resize image in element i to be same size
-   
-   //Next we want to copy the image into our new vector's element
-   for(unsigned j = 0; j < w; j++){
-    for(unsigned k = 0; k < h; k++){
-     HSLAPixel & pixel = svector[i]->getPixel(j,k); 
-/* ^^Get pixel data of other image and create a reference to the data^^ */
-     pixel = other.svector[i]->getPixel(j,k);
+StickerSheet::StickerSheet(const StickerSheet &other){
+ unsigned s = other.svector.size();
+ svector.resize(s);
+ svector.clear();
+ x_val.resize(s);
+ y_val.resize(s);
+ unsigned w = other.baseImage.width();
+ unsigned h = other.baseImage.height();
+ baseImage.resize(w, h);
+ for(unsigned i = 0; i < s; i++){
+  if(other.svector[i] != NULL){
+   svector.push_back(new Image);
+   w = other.svector[i]->width();
+   h = other.svector[i]->height();
+   svector[i]->resize(w, h);
+   for(unsigned x = 0; x < w; x++){
+    for(unsigned y = 0; y < h; y++){
+     HSLAPixel & pixel = svector[i]->getPixel(x,y);
+     pixel = other.svector[i]->getPixel(x,y);
     }
    }
-   //We also want to copy our x and y coordinates
    x_val[i] = other.x_val[i];
    y_val[i] = other.y_val[i];
-  } //Done copying elements within StickerSheet passed through
-} //End of Copy Constructor - elements and base image copied in full
-
-//Member Functions-----------------------------------------------------------
-int StickerSheet::addSticker(Image & sticker, unsigned x, unsigned y){
- //Check to see if sheet is at capacity.
- if(svector.size() == svector.capacity()){
-  return -1;
- } //Sheet is not at capacity - proceed with operations
- 
- unsigned index = svector.size(); //Sets index to # of elements
- svector[index] = new Image; //Allocate memory for a new sticker
- unsigned w = sticker.width(); //Get width and height of added sticker
- unsigned h = sticker.height(); 
- svector[index]->resize(w, h); //Resize image at index to fit sticker
- for(unsigned i = 0; i < w; i++){ //Iterate throughout image/sticker dimensions
-  for(unsigned j = 0; j < h; j++){
-   HSLAPixel & pixel = svector[index]->getPixel(i, j); //Create ref to pixel
-   pixel = sticker.getPixel(i,j); //Set pixel = to pixel at corresponding loc
-  } 
+  }
  }
+//Now copy base picture
+ w = baseImage.width();
+ h = baseImage.height();
+ for(unsigned x = 0; x < w; x++){
+  for(unsigned y = 0; y < h; y++){
+    HSLAPixel & pixel = baseImage.getPixel(x,y);
+    pixel = other.baseImage.getPixel(x,y);
+   }
+
+  } 
  
- //Sticker's image added to vector. Now we need to include its location
+}; //End of copy constructor
+
+const StickerSheet& StickerSheet::operator=(const StickerSheet & other){
+ if(this != &other){
+ unsigned s = other.svector.size();
+ for(unsigned i = 0; i < s; i++){
+  delete svector[i];
+ }
+ svector.resize(s);
+ svector.clear();
+ x_val.resize(s);
+ y_val.resize(s);
+ unsigned w = other.baseImage.width();
+ unsigned h = other.baseImage.width();
+ baseImage.resize(w, h);
+ for(unsigned i = 0; i < s; i++){
+  if(other.svector[i] != NULL){
+  svector.push_back(new Image);
+  w = other.svector[i]->width();
+  h = other.svector[i]->height();
+  svector[i]->resize(w, h);
+  for(unsigned x = 0; x < w; x++){
+   for(unsigned y = 0; y < h; y++){
+    HSLAPixel & pixel = svector[i]->getPixel(x,y);
+    pixel = other.svector[i]->getPixel(x,y);
+   }
+  }
+  x_val[i] = other.x_val[i];
+  y_val[i] = other.y_val[i];
+ }
+ }
+}
+/*
+ w = baseImage.width();
+ h = baseImage.height();
+ for(unsigned x = 0; x < w; x++){
+  for(unsigned y = 0; y < h; y++){
+   HSLAPixel & pixel = baseImage.getPixel(x,y);
+   pixel = other.baseImage.getPixel(x,y);
+  }
+ } 
+*/
+
+return *this;
+} //End of assignment operator
+
+void StickerSheet::changeMaxStickers(unsigned max){
+ unsigned s = svector.size();
+ if(max < s){
+  while(s > max){
+  if(svector[s] != NULL){
+  delete svector[s-1];
+  svector.pop_back();
+  s--;
+  }
+  }
+ }
+ svector.resize(max);
+ x_val.resize(max);
+ y_val.resize(max);
+
+} //End of changeMaxStickers
+
+int StickerSheet::addSticker(Image &sticker, unsigned x, unsigned y){
+ std::cout << "addSticker: original size() = " << svector.size() << std::endl;
+ unsigned s = svector.size();
+ unsigned cap = svector.capacity();
+ if(s == cap){
+ std::cout << "addSticker: vector full. Terminating operation." << std::endl;
+  return -1;
+ }
+ svector.push_back(new Image);
+ unsigned w = sticker.width();
+ unsigned h = sticker.height();
+ svector[s]->resize(w, h);
+ x_val[s] = x;
+ y_val[s] = y;
+ for(unsigned i = 0; i < w; i++){
+  for(unsigned j = 0; j < h; j++){
+  HSLAPixel & pixel = svector[s]->getPixel(i, j);
+  pixel = sticker.getPixel(i, j);
+  }
+ }
+ std::cout << "addSticker: new size() = " << svector.size() << std::endl;
+ return s;
+} //End of addSticker
+
+bool StickerSheet::translate(unsigned index, unsigned x, unsigned y){
+ unsigned s = svector.size();
+ if(index > s-1){ //Zero-based index
+  return false;
+ }
  x_val[index] = x;
  y_val[index] = y;
 
-return index-1; //Return zero-based layer index
-}
-
-void StickerSheet::changeMaxStickers(unsigned max){
-/*
-- We need to check if the new max is smaller than the old max, as we will need
-- to delete any memory stored in the the elements that are being excluded as
-- a result of the change in max.
-*/
-  if(max < svector.size()){
-   //Max is smaller - we need to delete excess elements
-  unsigned capacity = svector.capacity(); //Get # of elements
-  unsigned index = max-1;
-  for(unsigned i = index; i < capacity; i++){
-   if(svector[i] != NULL){
-     delete svector[i];
-    }
-   else{
-    break;
-    }
-   }
-  }
-  //Deleted elements if necessary - now we can resize our vectors.
-  x_val.resize(max);
-  y_val.resize(max);
-  svector.resize(max);
-  
-  return;
-}
-
-Image * StickerSheet::getSticker(unsigned index){
- //Check if index is invalid (no pointer or our of constraints)
- unsigned validindex = svector.size() - 1; //Subtract 1 from # of elements to 
-					   //get # of elements as an index
- if(index > validindex){ //Check to see if index is valid
-  return NULL; //Index is invalid, return NULL
- }
- 
- //The index is valid, return the pointer at said index
- return svector[index];
-}
-
-const StickerSheet & StickerSheet::operator= (const StickerSheet & other){
-/*
-- Assignment operator assigns / copies other sticker sheet into this
-- sticker sheet. It needs to check if the sticker sheets are equivalent 
-- and if not, copy the sticker sheet passed through into the current
-- sticker sheet via deep copy, copying pointers, images, and other data.
-*/
-
-//1. Check if stickers are the same. We can do this via pointer/reference
-
- if(this != &other){ //Pointers are not the same, create copy
-  unsigned size = svector.size();
-  for(unsigned i = 0; i < size; i++){
-   delete svector[i]; //We need to delete any associated memory and
-		      //reassign elements
-  }
-  //Memory cleared up/freed, now reallocate and reassign elements
-  unsigned sizemax = other.svector.capacity(); //We also want to resize
-  svector.resize(sizemax);		       //our existing vectors
-  x_val.resize(sizemax);			       //to match the incoming
-  y_val.resize(sizemax);			       //reference
-  size = other.svector.size(); //Get the # of elements for iteration
-  for(unsigned i = 0; i < size; i++){ //Iterate throughout &other elements
-   svector[i] = new Image; //Allocate new memory previously deleted
-   unsigned w = other.svector[i]->width(); //Get height and width of 
-   unsigned h = other.svector[i]->height(); //stickers
-   svector[i]->resize(w, h);
-   //Image resized, now copy image
-   for(unsigned k = 0; k < w; k++){
-    for(unsigned j = 0; j < h; j++){
-     HSLAPixel & pixel = svector[i]->getPixel(k, j); 
-     /* ^^Create a reference to our own image for edit^^ */
-     pixel = other.svector[i]->getPixel(k, j); //Copy pixel over
-    }
-   }
-   //Sticker has been copied into svector, also need to copy x and y 
-   //coords
-   x_val[i] = other.x_val[i];
-   y_val[i] = other.y_val[i];
-  }	
- }
-
-
-
-
-
-
-
-
-return *this;
-}
+ return true;
+} //End of translate
 
 void StickerSheet::removeSticker(unsigned index){
-/*
-- We need to remove the sticker at the given index. Thus, we would need to
-- delete any associated memory with the pointer at the index, and move all
-- of our elements behind it.
-*/
+ unsigned s = svector.size();
+ delete svector[index];
+ for(unsigned i = index; i < s-1; i++){
+ svector[i] = svector[i + 1];
+ x_val[i] = x_val[i + 1];
+ y_val[i] = y_val[i + 1];
+ }
+ svector.pop_back();
+} //End of removeSticker
 
-  unsigned i = index;
+Image* StickerSheet::getSticker(unsigned index){
+ unsigned s = svector.size();
+ if(index > s - 1){
+  return NULL;
+ }
+ return svector[index];
 
-  if(svector[index] == NULL){ //Check to see if a sticker exists at index
-   return; //No sticker exists at index - return
-  }
- delete svector[index]; //Delete memory at index location
- unsigned maxsize = svector.capacity();
- unsigned currentsize = svector.size();
- //Now we need to move all elements down the stack/layer index
- for(unsigned i = index; i < maxsize; i++){
-  if(svector[index + 1] == NULL){
+
+} //End of getSticker
+
+Image StickerSheet::render() const{ 
+ std::cout << "Creating base image..." << std::endl;
+ Image finalImage;
+ unsigned w = baseImage.width();
+ unsigned h = baseImage.height();
+ finalImage.resize(w, h);
+ for(unsigned x = 0; x < w; x++){
+  for(unsigned y = 0; y < h; y++){
+   HSLAPixel & pixel = finalImage.getPixel(x,y);
+   pixel = baseImage.getPixel(x,y);
+  } //End of inner loop
+ } //End of outer loop (baseImage)
+
+ std::cout << "Base image created. Creating stickers..." << std::endl;
+ unsigned s = svector.size();
+ for(unsigned int z = 0; z < s; z++){
+  //Resize baseImage if necessary
+  if(svector[z] == NULL){
+   std::cout << "svector at index [" << z << "] is empty. Breaking loop..." << std::endl;
    break;
   }
-  svector[i] = svector[i + 1];
-  x_val[i] = x_val[i + 1];
-  y_val[i] = y_val[i + 1];
- }
-return;
-}
-
-Image StickerSheet::render() const{
-/*
-- This function prints the stickers onto the base image and returns 
-- the entire image. It indexs through the layers and prints the stickers
-- one by one.
-*/
-
- unsigned w = baseImage.width(); //Get image and height of baseImage
- unsigned h = baseImage.height();
- Image finalImage; //Create an empty PNG w baseImage's constraints
- finalImage.resize(w, h);//Resize finalImage
- for(unsigned i = 0; i < w; i++){ //Iterate throughout baseImage's 
-  for(unsigned j = 0; j < h; j++){ //boundaries
-  //Copy image data from baseImage into finalImage
-   HSLAPixel & pixel = finalImage.getPixel(i, j);
-   pixel = baseImage.getPixel(i, j);
+  std::cout << "Gathering border data..." << std::endl;
+  unsigned stickw = svector[z]->width();
+  unsigned stickh = svector[z]->height();
+  unsigned xcoord = x_val[z];
+  unsigned ycoord = y_val[z];
+  std::cout << "stickw = " << stickw << " | stickh = " << stickh << " | xcoord = " << xcoord << " | ycoord = " << ycoord << " | w = " << w << " | h = " << h << std::endl;
+  if(xcoord + stickw > w){
+   if(ycoord + stickh > w){
+    finalImage.resize(xcoord + stickw, ycoord + stickh);
+   std::cout << "Resizing baseImage to fit stickers" << std::endl;
+   }
+   else{
+    finalImage.resize(xcoord + stickw, h);
+   std::cout << "Resizing baseImage to fit stickers" << std::endl;
+   }
   }
- }
- for(unsigned i = 0; i < svector.size(); i++){
- std::cout << "Checking for null pointers at index [" << i << "]. " << std::endl;
-  if(svector[i] == NULL){
-  std::cout << "There is a NULL pointer at index [" << i << "]. " << std::endl;
-  break;
-
+  else if(ycoord + stickh > w){
+   finalImage.resize(w, ycoord + stickw);
+   std::cout << "Resizing baseImage to fit stickers" << std::endl;
   }
-
-
- }
- std::cout << "baseImage printed onto finalImage" << std::endl;
- //BaseImage printed within finalImage. Now print each sticker.
- unsigned sussy = svector.size();
- std::cout << "Entering first FOR loop" << std::endl;
- for(unsigned i = 0; i < sussy; i++){
-  //Check to see if sticker's boundaries exceed baseImage
-  std::cout << "The value of i is: " << i << std::endl;
-  w = svector[i]->width(); //Gather boundary information
-  std::cout << "Passed line 1" << std::endl;
-  h = svector[i]->height();
-  std::cout << "Passed line 2" << std::endl;
-  unsigned xcoord = x_val[i];
-  std::cout << "Passed line 3" << std::endl;
-  unsigned ycoord = y_val[i];
-  std::cout << "Passed line 4" << std::endl;
-  unsigned basew = finalImage.width();
-  std::cout << "Passed line 5" << std::endl;
-  unsigned baseh = finalImage.height();
-  std::cout << "for loop [" << i << "]: boundaries gathered." << std::endl;
-  if(xcoord + w > basew && ycoord + h > baseh){ //baseWidth is too small, resize.
-   std::cout << "Resizing entire image..." << std::endl;
-   finalImage.resize(xcoord + w, ycoord + h);
-  }
-  else if(xcoord + w > basew){
-   std::cout << "Resizing only width..." << std::endl;
-   finalImage.resize(xcoord + w, baseh);
-  }
-  else if(ycoord + h > baseh){
-   std::cout << "Resizing only height..." << std::endl;
-   finalImage.resize(basew, ycoord + h);
-  }
-  //finalImage now fit sticker, print sticker onto image
-  std::cout << "finalImage adjusted to fit sticker. Printing sticker..." << std::endl;
-  for(unsigned j = 0; j < w; j++){
-   for(unsigned k = 0; k < h; k++){
-   //Check if alpha is 1. If not, then we can print.
-   HSLAPixel & pixelprint = finalImage.getPixel(xcoord + i, ycoord + k);
-   HSLAPixel & stickerpixel = svector[i]->getPixel(k, j);
-   if(stickerpixel.a == 1){ //If sticker's alpha is 1, don't print
+  std::cout << "baseImage resized. Printing stickers..." << std::endl;
+  for(unsigned x = 0; x < stickw; x++){
+   for(unsigned y = 0; y < stickh; y++){
+   HSLAPixel & pixel = finalImage.getPixel(x + xcoord, y + ycoord);
+   HSLAPixel & spixel = svector[z]->getPixel(x, y);
+   if(spixel.a == 0){
+    std::cout << "Alpha at pixel is zero. Skipping..." << std::endl;
     continue;
     }
-   else{ //Sticker's alpha is NOT 1, so we can print the sticker
-    pixelprint = stickerpixel;
-    }
-   }
-  std::cout << "Sticker [" << i+1 << "] printed. Continuing..." << std::endl;
-  }
+   pixel = spixel;
+   } //End of inner loop
+  } //End of middle loop
+ } //End of outer loop
+
+ return finalImage;
+
+} //End of render()
 
 
- }
 
 
-return finalImage;
-}
 
-bool StickerSheet::translate(unsigned index, unsigned x, unsigned y){
-  //Change x and y coordinates of sticker at specified zero-based index
-
-  //First, check if sticker exists at index
-  if(svector[index] == NULL){
-   return false;
-  }
-
-  //Sticker exists - now change its x and y coordinates  
-  x_val[index] = x;
-  y_val[index] = y;
-
-
-return 0;
-}
 
 
