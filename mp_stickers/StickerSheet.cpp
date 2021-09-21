@@ -227,16 +227,18 @@ Image StickerSheet::render() const{
    }
   }
   else if(ycoord + stickh > w){
-   finalImage.resize(w, ycoord + stickw);
+   finalImage.resize(w, ycoord + stickh);
    std::cout << "Resizing baseImage to fit stickers" << std::endl;
   }
-  std::cout << "baseImage resized. Printing stickers..." << std::endl;
+  std::cout << "baseImage resized. Printing stickers..." << std::endl; 
+  w = finalImage.width();
+  h = finalImage.height();
+std::cout << "stickw = " << stickw << " | stickh = " << stickh << " | xcoord = " << xcoord << " | ycoord = " << ycoord << " | w = " << w << " | h = " << h << std::endl;
   for(unsigned x = 0; x < stickw; x++){
    for(unsigned y = 0; y < stickh; y++){
    HSLAPixel & pixel = finalImage.getPixel(x + xcoord, y + ycoord);
    HSLAPixel & spixel = svector[z]->getPixel(x, y);
    if(spixel.a == 0){
-    std::cout << "Alpha at pixel is zero. Skipping..." << std::endl;
     continue;
     }
    pixel = spixel;

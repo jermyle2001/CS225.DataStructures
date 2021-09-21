@@ -38,7 +38,7 @@ int main() {
   std::cout << "baseimage added. Adding sticker2..." << std::endl;
 
   Image & sticker2ref = sticker2;
-  CanIGoHome.addSticker(sticker2ref, 10, 0);
+  CanIGoHome.addSticker(sticker2ref, 1000, 2000);
 
   std::cout << "baseimage added. Adding sticker3..." << std::endl;
 
@@ -56,7 +56,7 @@ int main() {
 
   std::cout << "Image rendered. Writing to file..." << std::endl;  
 
-  result.writeToFile("result.png");
+  result.writeToFile("myImage.png");
 
   std::cout << "Result image written to file. Terminating program." << std::endl;
 
