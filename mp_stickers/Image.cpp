@@ -252,6 +252,25 @@ return;
 
 void Image::scale(unsigned w, unsigned h){ //Find factor, apply to previous function 
 //If either dimension is smaller, scale down. If otherwise, scale up.
+/*
+double factorw = w / width();
+double factorh = h / height();
+double factord1 = 1 - factorw;
+double factord2 = 1 - factorh;
+if(abs(factord1) > abs(factord2){
+ scale(factorh);
+}
+else{
+ scale(factorw);
+}
+*/
+
+
+
+
+
+
+
 if(w < width() || h < height() ){ //If either is smaller, scale down.
 double factorwidth = w / width(); //Find factor of width 
 double factorheight = h / height(); //Find factor of height
