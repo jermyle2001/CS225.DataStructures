@@ -1,3 +1,6 @@
+#include <iostream>
+
+
 /**
  * @file list.cpp
  * Doubly Linked List (MP 3).
@@ -6,18 +9,30 @@
 template <class T>
 List<T>::List() { 
   // @TODO: graded in MP3.1
-    ListNode* head_ = NULL;
-    ListNode* tail_ = NULL;
+    head_ = NULL;
+    tail_ = NULL;
+    length_ = 0; //Initializing empty list, length == 0
+/*
+-Set length, which maintains the length of the list
+-In an empty list, head and tail == NULL
+*/
+
 }
+
+//---------------END OF List()-------------------------------
+//-------------BEGINNING OF begin()--------------------------
 
 /**
  * Returns a ListIterator with a position at the beginning of
  * the List.
- */
+*/
+
 template <typename T>
 typename List<T>::ListIterator List<T>::begin() const {
   // @TODO: graded in MP3.1
-  return List<T>::ListIterator(NULL);
+  
+
+  return List<T>::ListIterator(head_);
 }
 
 /**
@@ -26,6 +41,9 @@ typename List<T>::ListIterator List<T>::begin() const {
 template <typename T>
 typename List<T>::ListIterator List<T>::end() const {
   // @TODO: graded in MP3.1
+  
+
+
   return List<T>::ListIterator(NULL);
 }
 
@@ -37,7 +55,22 @@ typename List<T>::ListIterator List<T>::end() const {
 template <typename T>
 void List<T>::_destroy() {
   /// @todo Graded in MP3.1
+
+while(head_ != tail_){
+ ListNode* nextptr = head_->next;
+ delete head_;
+ head_ = nextptr;
 }
+
+//All nodes except tail deleted. Now we need to delete tail.
+ delete tail_; 
+//Set head and tail to NULL just in case
+ head_ = NULL;
+ tail_ = NULL;
+
+} //EoF 
+
+//----------------END OF destroy() FUNCTION---------------------------------
 
 /**
  * Inserts a new node at the front of the List.
@@ -52,13 +85,13 @@ void List<T>::insertFront(T const & ndata) {
   newNode -> next = head_;
   newNode -> prev = NULL;
   
-  if (head_ != NULL) {
+  if (head_ != NULL) { //If headnode exists, we need to set its prev value
     head_ -> prev = newNode;
   }
   if (tail_ == NULL) {
     tail_ = newNode;
   }
-  
+  head_ = newNode; //head_ needs to be set to newNode
 
   length_++;
 
@@ -73,7 +106,24 @@ void List<T>::insertFront(T const & ndata) {
 template <typename T>
 void List<T>::insertBack(const T & ndata) {
   /// @todo Graded in MP3.1
-}
+
+  ListNode * newNode = new ListNode(ndata); 
+  newNode -> next = NULL;
+  newNode -> prev = tail_; 
+
+  if(tail_ != NULL){ //If tail is not empty, we need to set its next
+   tail_ -> next = newNode;
+  }
+
+  tail_ = newNode; //Set tail to new tail which is newNode
+
+  if(head_ == NULL){ //Set to new head if empty list
+   head_ = newNode;
+  }
+
+  length_++;
+
+} //EoF
 
 /**
  * Helper function to split a sequence of linked memory at the node
@@ -95,8 +145,56 @@ template <typename T>
 typename List<T>::ListNode * List<T>::split(ListNode * start, int splitPoint) {
   /// @todo Graded in MP3.1
   ListNode * curr = start;
+  ListNode * temp = curr;
 
-  for (int i = 0; i < splitPoint || curr != NULL; i++) {
+/*
+-	CASES TO ACCOUNT FOR
+- 1. splitPoint + start exceeds list boundaries
+-    a. Would need to return NULL as head; operation was not
+-       successful
+- 2. splitPoint + start does NOT exceed list boundaries
+-    a. Set tail_ 
+-    b. Set tail_->next to NULL
+-    c. Set newhead->prev to NULL
+-    d. Return newhead
+- 3. splitPoint == 0
+-    a. Honestly no clue where to split, maybe just nowhere 
+*/
+  if(splitPoint == 0){
+   return NULL;
+  }
+
+
+
+
+  //1. Check if splitPoint exceeds boundaries of list
+  for(int i = 0; i < splitPoint; i++){
+   //Create a temp pointer to help keep track of previous location
+   //-is a contingency for if splitPoint == NULL
+   temp = curr;
+   curr = curr->next; //Increment curr to next place 
+   if(curr == NULL){
+   /*
+	If at any point curr == NULL, that means that splitPoint exceeds
+	the boundaries of the list. Thus we will return NULL.
+  */
+    return NULL;
+    }
+  } //End of FOR loop
+  /*
+	At this point.... 
+         temp = tail_
+	 curr = head2
+
+	We also need to set the value of next for the tail_ to be NULL.
+  */ 
+  tail_ = temp;
+  tail_->next = NULL;
+  curr->prev = NULL;
+  
+  return curr;
+
+  /*for (int i = 0; i < splitPoint || curr != NULL; i++) {
     curr = curr->next;
   }
 
@@ -105,8 +203,8 @@ typename List<T>::ListNode * List<T>::split(ListNode * start, int splitPoint) {
       curr->prev = NULL;
   }
 
-  return NULL;
-}
+  return NULL;*/
+} //EoF
 
 /**
   * Modifies List using the rules for a TripleRotate.
@@ -121,7 +219,50 @@ typename List<T>::ListNode * List<T>::split(ListNode * start, int splitPoint) {
 template <typename T>
 void List<T>::tripleRotate() {
   // @todo Graded in MP3.1
-}
+/*
+- 1. Check to see if multiple of 3
+-    a. If not, terminate (end of list)
+-    b. If so, perform operation
+- 2. Change next/prev pointers of list
+- 123->231
+*/
+
+ListNode* iterate = head_;
+ListNode* node1;
+ListNode* node2;
+ListNode* node3;
+int i = 0;
+for(i = 0; i < length_ / 3; i++){ //Divide length_ by 3, that's how many times we will iterate
+ std::cout << "Iterating..." << std::endl;
+ node1 = iterate; //Get node1's pointer
+ iterate = iterate->next; //Increment iterate to get next value of node2
+ node2 = iterate; //Get node2's pointer
+ iterate = iterate->next; //Increment iterate to get next value of node3
+ node3 = iterate; //Get node3's pointer
+ //We don't have to check if next will be NULL - the length_/3 does that for us
+//123->231
+ if(node1->prev == NULL){
+  head_ = node2;
+  node2->prev = NULL;
+ }
+ else{
+  node2->prev = node1->prev;
+  node1->prev->next = node2;
+ }
+
+ node1->next = node3->next;
+ node3->next->prev = node1;
+ node1->prev = node3;
+ node3->next = node1;
+ 
+ iterate = iterate->next;
+
+} //End of FOR Loop
+
+
+
+return;
+} //EoF
 
 
 /**

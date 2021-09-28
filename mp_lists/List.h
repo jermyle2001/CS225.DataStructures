@@ -17,6 +17,7 @@ using namespace std;
  * you will find it helpful to add your own helper functions to this class,
  * and are encouraged to add to it.
  */
+
 template <class T>
 class List {
   private:
@@ -60,7 +61,9 @@ class List {
         const T data;
     };
 
-  public:
+//----------------------END OF PUBLIC FUNCTIONS FOR LISTNODE-------------------------------
+ 
+  public: //Public functions for class List
     /**
      * Default List constructor.
      * Creates an empty List.
@@ -201,7 +204,7 @@ class List {
     ListIterator end() const;
 
     // Iterator constructor
-    template <class Iter>
+    template <class Iter> //Class list ALSO includes a template for Iterator
     List(const Iter& start, const Iter& end);
 
   private:

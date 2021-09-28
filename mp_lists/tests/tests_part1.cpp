@@ -19,7 +19,6 @@ using namespace cs225;
 //
 TEST_CASE("List::insertFront size", "[weight=1][part=1][valgrind]") {
     List<int> list;
-
     for (unsigned i = 0; i < 10; i++) { list.insertFront(i); }
 
     REQUIRE( 10 == list.size() );
@@ -44,6 +43,7 @@ TEST_CASE("List::insert contents", "[weight=4][part=1][valgrind]") {
     list.insertFront(1);
 
     stringstream s;
+
     list.print(s);
 
     REQUIRE( "< 1 2 3 3 2 1 >" == s.str() );
@@ -51,7 +51,6 @@ TEST_CASE("List::insert contents", "[weight=4][part=1][valgrind]") {
 
 TEST_CASE("List::triplerotate basic", "[weight=5][part=1][valgrind]") {
     List<int> list;
-
     for (int i = 1; i <= 2; i++)
         list.insertBack(i);
 
@@ -86,13 +85,10 @@ TEST_CASE("List::split simple", "[weight=5][part=1][valgrind]") {
     list.insertBack(2);
     list.insertBack(3);
     list.insertBack(4);
-
     List<int> slist = list.split(2);
     stringstream s1, s2;
-
     list.print(s1);
     slist.print(s2);
-
     REQUIRE( "< 1 2 >" == s1.str() );
     REQUIRE( "< 3 4 >" == s2.str() );
 }
