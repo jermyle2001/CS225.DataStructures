@@ -207,6 +207,10 @@ class BinaryTree
          * @param treeVector stores nodes in order
          */
         void inOrder(Node *subRoot, std::vector<T>& treeVector);
+        
+        
+        
+        void mirror(Node* subTree); //Added helper function for mirror()
 };
 
 #include "binarytree_given.cpp"

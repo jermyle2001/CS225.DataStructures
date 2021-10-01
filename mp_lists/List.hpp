@@ -287,7 +287,67 @@ void List<T>::reverse() {
 template <typename T>
 void List<T>::reverse(ListNode *& startPoint, ListNode *& endPoint) {
   /// @todo Graded in MP3.2
-}
+  
+  //Check to see if endPoint and startPoint are actually valid
+  if(startPoint == NULL || endPoint == NULL){
+  	return;
+  }
+  /*
+  - The following stores the information for the nodes on the edges
+  - of the list, in addition to the pointer "iterate" which we will
+  - use to iterate throughout the list
+  */
+  
+  ListNode* startPrev = startPoint->prev;
+  ListNode* endNext = endPoint->next; 
+  ListNode* iterate = startPoint;
+  ListNode* temp;
+  ListNode* oldIterate;
+  while(iterate != endPoint){ 
+  /*
+    While loop should iterate through list until designed endPoint. When
+    endPoint is reached, loop will terminate. Afterwards, set endPoint to
+    be next head.
+    This loop effectively switches the next and previous pointers of the
+    list.
+  */
+
+		if(iterate == NULL){
+			std::cout << "Iterate is 'NULL'" << std::endl;
+			break;
+		}
+		temp = iterate->next; //Switch next and prev pointers
+		iterate->next = iterate->prev;
+		iterate->prev = temp;
+		oldIterate = iterate;
+		iterate = temp; //Increment iterate to next node on list
+		
+  } //End of WHILE loop
+  /*
+    After the While loop, we need to set our last node before the 
+    the endPoint, in addition to setting the endPoint and startPoint and 
+    their respective edges.
+  */
+	//TAKE INTO ACCOUNT NULL POINTERS!
+	
+	//1. Set endPoint's pointers
+	//Switch endPoint and startPoint's next/prevs and edge nodes
+	endPoint->next = oldIterate;
+	endPoint->prev = startPrev;
+
+	startPoint->next = endNext;
+	if(endNext != NULL)
+	startPoint->next->prev = startPoint;
+	oldIterate->prev = endPoint;
+  if(head_ == startPoint){
+	head_ = endPoint;
+  }
+  if(tail_ == endPoint){
+	tail_ = startPoint;
+  }
+	return;
+	std::cout << "Passed return statement???" << std::endl;
+} //EoF
 
 /**
  * Reverses blocks of size n in the current List. You should use your
@@ -298,7 +358,80 @@ void List<T>::reverse(ListNode *& startPoint, ListNode *& endPoint) {
 template <typename T>
 void List<T>::reverseNth(int n) {
   /// @todo Graded in MP3.2
-}
+  //Check to see if index exceeds list size
+  if(n >= length_){
+  	reverse(); //Call reverse function, reverses head through tail
+  }
+  //Function reverses blocks of n elements in the list
+  ListNode* startPtr = head_;
+  ListNode* endPtr = head_;
+  ListNode* nextBlock;
+  for(int i = 0; i < length_ / n; i++){
+    for(int j = 0; j < n-1; j++){
+      endPtr = endPtr->next; //Get other end point
+    } //End of INNER FOR LOOP
+    nextBlock = endPtr->next;
+    if(nextBlock != NULL){
+      nextBlock->prev = startPtr;  
+    }
+    reverse(startPtr, endPtr);
+    startPtr->next = nextBlock;
+    if(i == 0){
+      head_ = endPtr;
+    }
+    if(nextBlock == NULL){
+      break;
+    }
+    endPtr = nextBlock;
+    startPtr = nextBlock;
+  }//End of OUTER FOR LOOP
+
+  //For rest of elements
+  if(nextBlock != NULL){
+  for(int i = 0; i < length_ % n; i++){
+    endPtr = endPtr->next;
+  }
+  reverse(startPtr, endPtr);
+  }
+  startPtr->next = NULL; //SEGFAULTS HERE
+  tail_= startPtr;
+
+  /*
+  ListNode* iterate = head_;
+  ListNode* temp = iterate->next;
+  ListNode* leftEdge; //Node on left side of block
+  ListNode* rightEdge; //Node on right side of block
+  ListNode* newTail; //(Old head)
+  ListNode* newHead; //(Old tail)
+  while(temp != NULL){
+    for(int i = 0; i < n; i++){
+      if(i == 0){ //Found newTail of block
+        newTail = iterate;
+        leftEdge = iterate->prev; //Possibly NULL, take into account later
+      }
+      if(i == n-1){ //Found newHead of block
+        newHead = iterate;
+        rightEdge = iterate->next;
+        if(leftEdge != NULL){
+          leftEdge->next = newHead;
+        }
+      }
+      //Switch next and prev in all cases
+      temp = iterate->next;
+      iterate->next = iterate->prev;
+      iterate->prev = temp;
+
+      //If temp == NULL then set right edge and terminate; 
+
+      //Increment iterate
+      iterate = temp;
+
+
+    } //End of FOR loop
+  } //End of WHILE loop
+  */
+  return;
+} //EoF
 
 
 /**

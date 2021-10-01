@@ -24,7 +24,6 @@ TEST_CASE("List::reverse", "[weight=5][part=2]") {
   PNG out = listToImage(list, in.width(), in.height());
   out.writeToFile("actual-reverse.png");
   INFO("Output image `out` saved as actual-reverse.png");
-
   REQUIRE( out == expected );
 }
 

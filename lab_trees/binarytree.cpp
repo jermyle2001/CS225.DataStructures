@@ -79,7 +79,44 @@ void BinaryTree<T>::printLeftToRight(const Node* subRoot) const
 void BinaryTree<T>::mirror()
 {
     //your code here
-}
+    /*
+    - We want to mirror the tree vertically, i.e. switch the left and
+    - right branches.
+    - Create a helper function - mirror() is void
+    */
+    return mirror(root);
+    
+    
+    
+} //Eof
+
+template <typename T>
+void BinaryTree<T>::mirror(Node* subRoot){
+	/*
+	- HELPER FUNCTION FOR mirror() - needed because mirror() is void by 
+	- default, but we want to recursively pass through a subtree
+	*/
+	//Base Case: reached bottom of tree/no children, recurse
+	if(subRoot == NULL){
+		return;
+	}
+	else{
+	Node* tempNode;
+	
+	//Call the function on the subtrees, swapping the left and rights
+	mirror(subRoot->right);
+	mirror(subRoot->left);
+	
+	//Swap the nodes
+	tempNode = subRoot->right; //Store right node
+	subRoot->right = subRoot->left; //Set right node == left node
+	subRoot->left = tempNode; //Set left node == right node	
+	
+	}
+	return;
+} //EoF
+
+
 
 
 /**
@@ -92,6 +129,16 @@ template <typename T>
 bool BinaryTree<T>::isOrderedIterative() const
 {
     // your code here
+    /*
+    - Iterate throughout tree, seeing if an Inorder Traversal would
+    - print out not in order
+    */
+    
+    
+    
+    
+    
+    
     return false;
 }
 
