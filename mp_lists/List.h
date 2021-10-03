@@ -302,6 +302,7 @@ class List {
      * @return A pointer to the beginning of the now sorted chain.
      */
     ListNode* mergesort(ListNode* start, int chainLength);
+
 };
 
 // needed for template instantiation

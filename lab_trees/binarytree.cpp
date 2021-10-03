@@ -133,13 +133,19 @@ bool BinaryTree<T>::isOrderedIterative() const
     - Iterate throughout tree, seeing if an Inorder Traversal would
     - print out not in order
     */
-    
-    
-    
-    
-    
-    
-    return false;
+   InorderTraversal<T> s(root);
+   auto itr = s.begin();
+   int check = (*itr)->elem;
+   ++itr;
+   while(itr != s.end()){
+       if((*itr)->elem < check){
+           return false;
+       }
+       check = (*itr)->elem;
+       ++itr;
+   }
+
+    return true;
 }
 
 /**

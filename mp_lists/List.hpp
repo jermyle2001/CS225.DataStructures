@@ -56,14 +56,12 @@ template <typename T>
 void List<T>::_destroy() {
   /// @todo Graded in MP3.1
 
-while(head_ != tail_){
+while(head_ != NULL){
  ListNode* nextptr = head_->next;
  delete head_;
  head_ = nextptr;
 }
 
-//All nodes except tail deleted. Now we need to delete tail.
- delete tail_; 
 //Set head and tail to NULL just in case
  head_ = NULL;
  tail_ = NULL;
@@ -95,7 +93,7 @@ void List<T>::insertFront(T const & ndata) {
 
   length_++;
 
-}
+} //EoF
 
 /**
  * Inserts a new node at the back of the List.
@@ -194,16 +192,6 @@ typename List<T>::ListNode * List<T>::split(ListNode * start, int splitPoint) {
   
   return curr;
 
-  /*for (int i = 0; i < splitPoint || curr != NULL; i++) {
-    curr = curr->next;
-  }
-
-  if (curr != NULL) {
-      curr->prev->next = NULL;
-      curr->prev = NULL;
-  }
-
-  return NULL;*/
 } //EoF
 
 /**
@@ -226,40 +214,48 @@ void List<T>::tripleRotate() {
 - 2. Change next/prev pointers of list
 - 123->231
 */
-
+if(length_ < 3){
+  return;
+}
 ListNode* iterate = head_;
 ListNode* node1;
 ListNode* node2;
 ListNode* node3;
 int i = 0;
-for(i = 0; i < length_ / 3; i++){ //Divide length_ by 3, that's how many times we will iterate
- std::cout << "Iterating..." << std::endl;
- node1 = iterate; //Get node1's pointer
- iterate = iterate->next; //Increment iterate to get next value of node2
- node2 = iterate; //Get node2's pointer
- iterate = iterate->next; //Increment iterate to get next value of node3
- node3 = iterate; //Get node3's pointer
- //We don't have to check if next will be NULL - the length_/3 does that for us
-//123->231
- if(node1->prev == NULL){
-  head_ = node2;
-  node2->prev = NULL;
- }
- else{
-  node2->prev = node1->prev;
-  node1->prev->next = node2;
- }
-
- node1->next = node3->next;
- node3->next->prev = node1;
- node1->prev = node3;
- node3->next = node1;
- 
- iterate = iterate->next;
-
-} //End of FOR Loop
-
-
+for (i = 0; i < length_/3; i++){
+  /*
+  - Rotates in intervals of 3, so divide length by 3
+  - <123> -> <231>
+  */ 
+  node1 = iterate;
+  node2 = iterate->next;
+  node3 = node2->next;
+  iterate = node3->next;
+  node1->next = iterate;
+  if(i == 0){
+    node2->prev = NULL;
+    head_ = node2;
+  }
+  else{
+    node2->prev = node1->prev;
+    node2->prev->next = node2;
+  }
+  node1->next = node3->next;
+  node3->next = node1;
+  node1->prev = node3;
+  if(node1->next != NULL){
+    node1->next->prev = node1;
+  }
+  tail_ = node1;
+} //Eo FOR Loop
+//Do NOT Shift remaining elements if not multiple of 3
+iterate = head_;
+for(i = 0; i < length_ - 1; i++){//Make sure prev elements are correct
+  node1 = iterate;
+  node1->next->prev = node1;
+  iterate = iterate->next;
+}
+tail_ = node1;
 
 return;
 } //EoF
@@ -290,7 +286,12 @@ void List<T>::reverse(ListNode *& startPoint, ListNode *& endPoint) {
   
   //Check to see if endPoint and startPoint are actually valid
   if(startPoint == NULL || endPoint == NULL){
-  	return;
+    if(endPoint == NULL){
+      endPoint = tail_;
+    }
+    else{
+      return;
+    }
   }
   /*
   - The following stores the information for the nodes on the edges
@@ -346,7 +347,6 @@ void List<T>::reverse(ListNode *& startPoint, ListNode *& endPoint) {
 	tail_ = startPoint;
   }
 	return;
-	std::cout << "Passed return statement???" << std::endl;
 } //EoF
 
 /**
@@ -358,81 +358,60 @@ void List<T>::reverse(ListNode *& startPoint, ListNode *& endPoint) {
 template <typename T>
 void List<T>::reverseNth(int n) {
   /// @todo Graded in MP3.2
-  //Check to see if index exceeds list size
-  if(n >= length_){
-  	reverse(); //Call reverse function, reverses head through tail
-  }
-  //Function reverses blocks of n elements in the list
-  ListNode* startPtr = head_;
-  ListNode* endPtr = head_;
-  ListNode* nextBlock;
-  for(int i = 0; i < length_ / n; i++){
-    for(int j = 0; j < n-1; j++){
-      endPtr = endPtr->next; //Get other end point
-    } //End of INNER FOR LOOP
-    nextBlock = endPtr->next;
-    if(nextBlock != NULL){
-      nextBlock->prev = startPtr;  
-    }
-    reverse(startPtr, endPtr);
-    startPtr->next = nextBlock;
-    if(i == 0){
-      head_ = endPtr;
-    }
-    if(nextBlock == NULL){
-      break;
-    }
-    endPtr = nextBlock;
-    startPtr = nextBlock;
-  }//End of OUTER FOR LOOP
+  ListNode* prev = NULL;
+  ListNode* curr = head_;
+  ListNode* temp = NULL;
+  ListNode* tail = NULL;
+  ListNode* newHead = NULL;
+  ListNode* join = NULL;
+  int count = 0;
+  int count2 = 0;
+  while(curr != NULL){
+    //Iterate through whole list, in groups of k
+    count = n;  //Set count to n for iteration
+    join = curr; //Join is the node b/w groups
+    prev = NULL; //Reset prev every time
 
-  //For rest of elements
-  if(nextBlock != NULL){
-  for(int i = 0; i < length_ % n; i++){
-    endPtr = endPtr->next;
-  }
-  reverse(startPtr, endPtr);
-  }
-  startPtr->next = NULL; //SEGFAULTS HERE
-  tail_= startPtr;
 
-  /*
-  ListNode* iterate = head_;
-  ListNode* temp = iterate->next;
-  ListNode* leftEdge; //Node on left side of block
-  ListNode* rightEdge; //Node on right side of block
-  ListNode* newTail; //(Old head)
-  ListNode* newHead; //(Old tail)
-  while(temp != NULL){
-    for(int i = 0; i < n; i++){
-      if(i == 0){ //Found newTail of block
-        newTail = iterate;
-        leftEdge = iterate->prev; //Possibly NULL, take into account later
+    while(curr != NULL && count--){ //Loop terminates if end reached, OR group finished
+      temp = curr->next;
+      curr->next = prev; //Sets curr->next to prev, but is NULL on first iteration
+      prev = curr;
+      curr = temp;
+    } //End of INNER While loop
+
+    if(newHead == NULL){
+      newHead = prev; //Sets new head
+      
+      if(count2 == 0){
+        head_ = newHead;
+        newHead->prev = NULL;
       }
-      if(i == n-1){ //Found newHead of block
-        newHead = iterate;
-        rightEdge = iterate->next;
-        if(leftEdge != NULL){
-          leftEdge->next = newHead;
-        }
-      }
-      //Switch next and prev in all cases
-      temp = iterate->next;
-      iterate->next = iterate->prev;
-      iterate->prev = temp;
+    }
 
-      //If temp == NULL then set right edge and terminate; 
-
-      //Increment iterate
-      iterate = temp;
+    if(tail != NULL){
+      tail->next = prev;
+    }
+    tail = join;
+    //tail_ = tail;
+    count2++;
 
 
-    } //End of FOR loop
-  } //End of WHILE loop
-  */
+  } //End of OUTER While loop
+  //Now set the prev pointers
+  curr = head_;
+  head_->prev = NULL;
+  while(curr!= NULL){
+    if(curr->next != NULL)
+    curr->next->prev = curr;
+    if(curr->next == NULL)
+    break;
+    curr = curr->next;
+  }
+  tail_ = curr;
+
   return;
 } //EoF
-
 
 /**
  * Merges the given sorted list into the current sorted list.
@@ -472,8 +451,156 @@ void List<T>::mergeWith(List<T> & otherList) {
 template <typename T>
 typename List<T>::ListNode * List<T>::merge(ListNode * first, ListNode* second) {
   /// @todo Graded in MP3.2
-  return NULL;
-}
+  /*
+  - Merges two lists together AND sorts them
+  - Not judged on time, can just do whatever
+  - Approach: Bubble sort list, can just merge both lists and return once larger list
+  -   is sorted
+  - Approach 2: Get node, compare data (if node1 > node2, insert node2 in front of node1),
+  -   also change node to left of node1's next, change prev pointers later
+  */
+  std::cout << "Running merge" << std::endl;
+  ListNode* node1 = first;
+  ListNode* node2 = second;
+  ListNode* node1prev = first->prev; //Potentially NULL
+  ListNode* node1next = first->next;
+
+  while(node2 != NULL){ //Outer WHILE Loop, iterates through second list
+    //Don't need to update node1 b/c lists are presorted, BUT need to update node2 to get
+    //node data for comparison 
+    node2 = second;
+    node1next = first->next;
+    while(node1 != NULL){ //Inner WHILE Loop, iterates through first list
+      if(!(node1->data < node2->data)){ //Compare data. Put node2 in front if node1 > node2
+        //node2 < node1, place in front, update first if first node
+        if(node1 != first){ 
+          //If node1 is NOT at the head, update normally
+          node1->prev->next = node2;
+          node2->prev = node1->prev;
+        }
+        else{ //Update first if node1 was 'first'
+          first = node2;
+          node2->prev = NULL;
+        }
+
+        //node2 < node1, so node2->next = node1
+        node2->next = node1;
+        //node1 will continue pointing where it did originally
+        node1->prev = node2;  
+        break; //Exit loop, node2 has been placed, need to grab new node2
+      } //Eo data comparison
+      //Iterate node1
+      node1 = node1->next;
+
+    } //Eo Inner WHILE
+    //Iterate node2/second and get next node of second list
+    second = second->next;
+
+  } //Eo Outer WHILE
+  std::cout << "Exiting merge and returning first" << std::endl;
+  return first;
+  
+
+
+
+
+ /*
+  if(first == NULL || second == NULL){
+    if(first == NULL && second == NULL){
+      return NULL;
+    }
+    else if(first == NULL){
+      return first;
+    }
+    else{
+      return second;
+    }
+  }
+
+  //Combine lists into one larger list
+  ListNode* curr1 = first;
+  while(curr1->next != NULL){
+    curr1 = curr1->next;
+  }
+
+  std::cout << "Combining list" << std::endl;
+  //curr1 is now the end of the list, link two lists together
+  second->prev = curr1;
+  curr1->next = second;
+
+  //Now bubble sort list
+  int swapcount = 0;
+  curr1 = first;
+  ListNode* curr2 = NULL;
+  do{
+    swapcount = 0;
+    curr1 = first; //Effective head of list, make sure to change it!
+    std::cout << "curr1 set to first" << std::endl;
+    while(curr1->next != curr2){ //Iterate through list until curr1 == curr2
+      std::cout << "Sorting..." << std::endl;
+      if(curr1 == NULL || curr1->next == NULL){
+        std::cout << "curr1 is NULL!" << std::endl;
+        break;
+      }
+      if(!(curr1->data < curr1->next->data)){ //Compare data, statement says if curr1 is NOT less than curr1->next, i.e. curr1->next is less than curr1/curr1 is LARGER than curr2
+        //Swap pointers, check if it's at effective head
+        std::cout << "Entering if statements" << std::endl;
+        ListNode* node1 = curr1;
+        ListNode* node2 = curr1->next;
+        ListNode* rightNode = node2->next; //Effective right edge
+        ListNode* leftNode = node1->prev;
+        if(curr1 == first){ //Case of head (first)
+          //first (head) is larger than passed in value, so we need to swap places
+          //Swap positions of node 1 and node2
+          rightNode = node2->next;
+          node1->next = rightNode;
+          leftNode = node1->prev;
+          node1->prev = node2;
+          node2->prev = NULL; //node2 is new first
+          node1->next->prev = node1;
+          node2->next = node1;
+          //Set new head (first) to node2, which is smaller
+          first = node2;
+          if(first == NULL){
+            std::cout << "first is NULL!" << std::endl;
+          }
+          swapcount = 1;
+        }
+        else{ //Else swap pointers normally 1 2 -> 2 1
+          rightNode = node2->next;
+          node1->next = rightNode;
+          leftNode = node1->prev;
+          node1->prev = node2;
+          node2->prev = leftNode;
+          leftNode->next = node2;
+          if(rightNode != NULL){
+            rightNode->prev = node1;
+          }
+          swapcount = 1;
+        }
+      }
+      std::cout << "Iterating curr1" << std::endl;
+      curr1 = curr1->next; //iterate curr
+      std::cout << "curr1 iterated" << std::endl;
+      if(curr1 == NULL){
+        std::cout << "curr1 is NULL!" << std::endl;
+        break;
+      }
+    } //End of Inner WHILE Loop
+    std::cout << "Setting curr2 == curr1" << std::endl;
+    if(curr1->next == NULL){
+      break;
+    }
+    curr2 = curr1;
+  } //End of DO
+  while(swapcount);
+  std::cout << "Exited while loop" << std::endl;
+  return first; //INSERT THE HEAD HERE
+*/
+  
+} //EoF
+
+
 
 /**
  * Sorts a chain of linked memory given a start node and a size.
@@ -489,5 +616,10 @@ typename List<T>::ListNode * List<T>::merge(ListNode * first, ListNode* second) 
 template <typename T>
 typename List<T>::ListNode* List<T>::mergesort(ListNode * start, int chainLength) {
   /// @todo Graded in MP3.2
+  //Recursive merge 
+
+
+
+
   return NULL;
 }
