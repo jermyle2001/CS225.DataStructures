@@ -459,145 +459,96 @@ typename List<T>::ListNode * List<T>::merge(ListNode * first, ListNode* second) 
   - Approach 2: Get node, compare data (if node1 > node2, insert node2 in front of node1),
   -   also change node to left of node1's next, change prev pointers later
   */
+
+ /*
+  ListNode* node1 = first;
+  ListNode* node2 = second;
+  ListNode* node1prev = node1->prev;
+
+  //Iterate through second list and get its nodes
+  while(second != NULL){
+    node2 = second;
+    second = second->next;
+    node1 = first;
+    while(node1 != NULL){
+      if(node2->data < node1->data){ //Look for when node1 > node2
+        if(node1 == first){ //First iteration, need to reset first
+          node2->prev = NULL;
+          first = node2;
+        }
+        else{ //Not first iteration, set node1's prev's next as well
+          node1->prev->next = node2;
+          node2->prev = node1->prev;
+        }
+        //Set things normally
+        node2->next = node1;
+        node1->prev = node2;
+        break; //exit loop, get next node2
+      } //Eo OUTER If
+      node1prev = node1;
+      node1 = node1->next;
+
+    } //EO INNER While loop
+    //Exited INNER while loop, meaning either node1 == NULL OR we have inserted node2
+    if(node1 == NULL){ //If node1 == NULL, means we just add rest of list and return
+      node1prev->next = node2;
+      node2->prev = node1;
+      node2->next = NULL;
+    }
+
+  } //Eo OUTER While loop
+  return first;
+  */
+
+
+  
   std::cout << "Running merge" << std::endl;
   ListNode* node1 = first;
   ListNode* node2 = second;
   ListNode* node1prev = first->prev; //Potentially NULL
-  ListNode* node1next = first->next;
 
-  while(node2 != NULL){ //Outer WHILE Loop, iterates through second list
-    //Don't need to update node1 b/c lists are presorted, BUT need to update node2 to get
-    //node data for comparison 
-    node2 = second;
-    node1next = first->next;
-    while(node1 != NULL){ //Inner WHILE Loop, iterates through first list
-      if(!(node1->data < node2->data)){ //Compare data. Put node2 in front if node1 > node2
-        //node2 < node1, place in front, update first if first node
-        if(node1 != first){ 
-          //If node1 is NOT at the head, update normally
+    while(node1 != NULL){
+      //Iterate through node1, looking for appropriate value
+      if(!(node2->data < node1->data)){ //We want if(node2->data > node1->data)
+        if(node1 != first){ //Update list normally if not at first iteration
           node1->prev->next = node2;
           node2->prev = node1->prev;
         }
-        else{ //Update first if node1 was 'first'
+        else{
           first = node2;
           node2->prev = NULL;
         }
+        //Update rest of list that doesn't depend on previous node
+        //Don't change node1->next, change its prev
+        node1->prev = node2;
 
-        //node2 < node1, so node2->next = node1
-        node2->next = node1;
-        //node1 will continue pointing where it did originally
-        node1->prev = node2;  
-        break; //Exit loop, node2 has been placed, need to grab new node2
-      } //Eo data comparison
-      //Iterate node1
-      node1 = node1->next;
-
-    } //Eo Inner WHILE
-    //Iterate node2/second and get next node of second list
-    second = second->next;
-
-  } //Eo Outer WHILE
-  std::cout << "Exiting merge and returning first" << std::endl;
-  return first;
-  
-
-
-
-
- /*
-  if(first == NULL || second == NULL){
-    if(first == NULL && second == NULL){
-      return NULL;
-    }
-    else if(first == NULL){
-      return first;
-    }
-    else{
-      return second;
-    }
-  }
-
-  //Combine lists into one larger list
-  ListNode* curr1 = first;
-  while(curr1->next != NULL){
-    curr1 = curr1->next;
-  }
-
-  std::cout << "Combining list" << std::endl;
-  //curr1 is now the end of the list, link two lists together
-  second->prev = curr1;
-  curr1->next = second;
-
-  //Now bubble sort list
-  int swapcount = 0;
-  curr1 = first;
-  ListNode* curr2 = NULL;
-  do{
-    swapcount = 0;
-    curr1 = first; //Effective head of list, make sure to change it!
-    std::cout << "curr1 set to first" << std::endl;
-    while(curr1->next != curr2){ //Iterate through list until curr1 == curr2
-      std::cout << "Sorting..." << std::endl;
-      if(curr1 == NULL || curr1->next == NULL){
-        std::cout << "curr1 is NULL!" << std::endl;
-        break;
-      }
-      if(!(curr1->data < curr1->next->data)){ //Compare data, statement says if curr1 is NOT less than curr1->next, i.e. curr1->next is less than curr1/curr1 is LARGER than curr2
-        //Swap pointers, check if it's at effective head
-        std::cout << "Entering if statements" << std::endl;
-        ListNode* node1 = curr1;
-        ListNode* node2 = curr1->next;
-        ListNode* rightNode = node2->next; //Effective right edge
-        ListNode* leftNode = node1->prev;
-        if(curr1 == first){ //Case of head (first)
-          //first (head) is larger than passed in value, so we need to swap places
-          //Swap positions of node 1 and node2
-          rightNode = node2->next;
-          node1->next = rightNode;
-          leftNode = node1->prev;
-          node1->prev = node2;
-          node2->prev = NULL; //node2 is new first
-          node1->next->prev = node1;
+        //Change node2's next, but iterate second first
+        if(second->next != NULL){ //Check to see if list2 is empty
+          second = second->next;
           node2->next = node1;
-          //Set new head (first) to node2, which is smaller
-          first = node2;
-          if(first == NULL){
-            std::cout << "first is NULL!" << std::endl;
-          }
-          swapcount = 1;
+          node2 = second; //Iterate node2/second list
         }
-        else{ //Else swap pointers normally 1 2 -> 2 1
-          rightNode = node2->next;
-          node1->next = rightNode;
-          leftNode = node1->prev;
-          node1->prev = node2;
-          node2->prev = leftNode;
-          leftNode->next = node2;
-          if(rightNode != NULL){
-            rightNode->prev = node1;
-          }
-          swapcount = 1;
+        else{ //List2 is empty, set node2 and terminate
+          node2->next = node1;
+          return first;
         }
-      }
-      std::cout << "Iterating curr1" << std::endl;
-      curr1 = curr1->next; //iterate curr
-      std::cout << "curr1 iterated" << std::endl;
-      if(curr1 == NULL){
-        std::cout << "curr1 is NULL!" << std::endl;
-        break;
-      }
-    } //End of Inner WHILE Loop
-    std::cout << "Setting curr2 == curr1" << std::endl;
-    if(curr1->next == NULL){
-      break;
+        
+      } //Eo IF
+      //Iterate node1, node2 has already been iterated
+      node1prev = node1;
+      node1 = node1->next;
+    } //Eo WHILE
+
+    // Check if second list is still empty, if not then add to current list since lists are
+    // presorted.
+    // Add second list to first list if necessary
+    if(second != NULL){
+      node1prev->next = second;
+      second->prev = node1prev;
     }
-    curr2 = curr1;
-  } //End of DO
-  while(swapcount);
-  std::cout << "Exited while loop" << std::endl;
-  return first; //INSERT THE HEAD HERE
-*/
-  
+    return first;
+    
+
 } //EoF
 
 
@@ -616,7 +567,6 @@ typename List<T>::ListNode * List<T>::merge(ListNode * first, ListNode* second) 
 template <typename T>
 typename List<T>::ListNode* List<T>::mergesort(ListNode * start, int chainLength) {
   /// @todo Graded in MP3.2
-  //Recursive merge 
 
 
 
