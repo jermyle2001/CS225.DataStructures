@@ -158,10 +158,16 @@ typename List<T>::ListNode * List<T>::split(ListNode * start, int splitPoint) {
 - 3. splitPoint == 0
 -    a. Honestly no clue where to split, maybe just nowhere 
 */
-  if(splitPoint == 0){
-   return NULL;
+  //Edge cases: if splitpoint is <= 0, and if splitpoint > length_.
+  if(splitPoint <= 0){
+    //Here, our splitPoint is a number that is negative or 0. Thus, we set to zero.
+    splitPoint = 0;
   }
-
+  if(splitPoint > length_){
+    //Here, we will return an empty list, since we split outside the boundaries and thus the 
+    //second list would technically be empty. We can call the default constructor.
+    return NULL;
+  }
 
 
 
@@ -336,15 +342,21 @@ void List<T>::reverse(ListNode *& startPoint, ListNode *& endPoint) {
 	endPoint->next = oldIterate;
 	endPoint->prev = startPrev;
 
-	startPoint->next = endNext;
-	if(endNext != NULL)
-	startPoint->next->prev = startPoint;
-	oldIterate->prev = endPoint;
   if(head_ == startPoint){
-	head_ = endPoint;
+	  //If startPoint was the head, then the reset the head
+    head_ = endPoint;
   }
   if(tail_ == endPoint){
-	tail_ = startPoint;
+    //If endPoint was the tail, then reset the tail
+	  tail_ = startPoint;
+  }
+  if(head_ != startPoint){
+    //If startPoint is not the head, then node on left's next needs to be changed
+    startPrev->next = iterate;
+  }
+  if(tail_ != endPoint){
+    //If endPoint is not tail, then node on right's prev needs to be changed
+    startPoint->next->prev = startPoint;
   }
 	return;
 } //EoF
@@ -459,95 +471,51 @@ typename List<T>::ListNode * List<T>::merge(ListNode * first, ListNode* second) 
   - Approach 2: Get node, compare data (if node1 > node2, insert node2 in front of node1),
   -   also change node to left of node1's next, change prev pointers later
   */
-
- /*
-  ListNode* node1 = first;
-  ListNode* node2 = second;
-  ListNode* node1prev = node1->prev;
-
-  //Iterate through second list and get its nodes
-  while(second != NULL){
-    node2 = second;
-    second = second->next;
-    node1 = first;
-    while(node1 != NULL){
-      if(node2->data < node1->data){ //Look for when node1 > node2
-        if(node1 == first){ //First iteration, need to reset first
-          node2->prev = NULL;
-          first = node2;
-        }
-        else{ //Not first iteration, set node1's prev's next as well
-          node1->prev->next = node2;
-          node2->prev = node1->prev;
-        }
-        //Set things normally
-        node2->next = node1;
-        node1->prev = node2;
-        break; //exit loop, get next node2
-      } //Eo OUTER If
-      node1prev = node1;
-      node1 = node1->next;
-
-    } //EO INNER While loop
-    //Exited INNER while loop, meaning either node1 == NULL OR we have inserted node2
-    if(node1 == NULL){ //If node1 == NULL, means we just add rest of list and return
-      node1prev->next = node2;
-      node2->prev = node1;
-      node2->next = NULL;
-    }
-
-  } //Eo OUTER While loop
-  return first;
-  */
-
-
   
-  std::cout << "Running merge" << std::endl;
+  ListNode* head = first;
   ListNode* node1 = first;
   ListNode* node2 = second;
-  ListNode* node1prev = first->prev; //Potentially NULL
-
-    while(node1 != NULL){
-      //Iterate through node1, looking for appropriate value
-      if(!(node2->data < node1->data)){ //We want if(node2->data > node1->data)
-        if(node1 != first){ //Update list normally if not at first iteration
-          node1->prev->next = node2;
-          node2->prev = node1->prev;
-        }
-        else{
-          first = node2;
-          node2->prev = NULL;
-        }
-        //Update rest of list that doesn't depend on previous node
-        //Don't change node1->next, change its prev
-        node1->prev = node2;
-
-        //Change node2's next, but iterate second first
-        if(second->next != NULL){ //Check to see if list2 is empty
-          second = second->next;
-          node2->next = node1;
-          node2 = second; //Iterate node2/second list
-        }
-        else{ //List2 is empty, set node2 and terminate
-          node2->next = node1;
-          return first;
-        }
-        
-      } //Eo IF
-      //Iterate node1, node2 has already been iterated
-      node1prev = node1;
+  ListNode* iterator;
+  //Decide if we want to make a new head or not
+  if(first->data < second->data){ 
+    //first is smaller, set it as head
+    head = first;
+    node1 = node1->next; //Iterate node1
+  }
+  else{
+    //second is smaller, set it as head
+    head = node2;
+    node2 = node2->next; //Iterate node2
+  }
+  iterator = head;
+  while(node1 != NULL && node2 != NULL){ //Iterate until either list is full
+    //Constantly compare data via if statement - stop iterating when we find 1 < 2
+    //Basically just build a new list, comparing nodes until one list runs out
+    if(!(node2->data < node1->data)){
+      //Reset links b/w nodes, iterate node1
+      iterator->next = node1;
+      node1->prev = iterator; 
       node1 = node1->next;
-    } //Eo WHILE
-
-    // Check if second list is still empty, if not then add to current list since lists are
-    // presorted.
-    // Add second list to first list if necessary
-    if(second != NULL){
-      node1prev->next = second;
-      second->prev = node1prev;
+    } //Eo IF statement
+    else{
+      iterator->next = node2;
+      node2->prev = iterator;
+      node2 = node2->next;
     }
-    return first;
-    
+    //Iterate new list
+    iterator = iterator->next;
+  } //Eo WHILE Loop
+  //Either node1 or node2 is NULL, figure out which one ran out first and add remaining nodes
+  if(node1 == NULL && node2 != NULL){
+    //First list ran out, add in second list
+    iterator->next = node2;
+    node2->prev = iterator;
+  }
+  if(node2 == NULL && node1 != NULL){
+    iterator->next = node1;
+    node1->prev = iterator;
+  }
+  return head;
 
 } //EoF
 
@@ -567,9 +535,14 @@ typename List<T>::ListNode * List<T>::merge(ListNode * first, ListNode* second) 
 template <typename T>
 typename List<T>::ListNode* List<T>::mergesort(ListNode * start, int chainLength) {
   /// @todo Graded in MP3.2
-
-
-
-
-  return NULL;
+  //Base case: when start->next == NULL, since our list is as small as possible
+  if(start->next == NULL){
+    return start; //Return/recurse
+  }
+  int halfChain;
+  halfChain = chainLength/2; //Recursive statement divides problem into two, so chainLength/2
+  ListNode* secondList;
+  secondList = split(start, halfChain);
+  //Now we have to recurse, but one of our base cases will have 
+  return merge(mergesort(start, halfChain), mergesort(secondList, (chainLength % 2) + halfChain));
 }
