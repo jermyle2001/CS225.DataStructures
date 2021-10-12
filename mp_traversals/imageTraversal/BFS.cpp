@@ -51,7 +51,7 @@ BFS::BFS(const PNG & png, const Point & start, double tolerance) {
  */
 ImageTraversal::Iterator BFS::begin() {
   /** @todo [Part 1] */
-  return ImageTraversal::Iterator();
+  return ImageTraversal::Iterator(this, BFSpng, BFSstart, BFStolerance);
 }
 
 /**
@@ -97,4 +97,12 @@ Point BFS::peek() const {
 bool BFS::empty() const {
   /** @todo [Part 1] */
   return BFStraversal.empty();
+}
+
+int BFS::getVisited(Point visitPoint){
+  return visited[visitPoint.x][visitPoint.y];
+}
+
+void BFS::setVisited(Point visitPoint){
+  visited[visitPoint.x][visitPoint.y] = 1;
 }

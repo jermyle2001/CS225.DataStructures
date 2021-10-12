@@ -32,6 +32,9 @@ public:
   Point pop();
   Point peek() const;
   bool empty() const;
+  int getVisited(Point visitPoint);
+  void setVisited(Point visitPoint);
+
 
 private:
 	/** @todo [Part 1] */

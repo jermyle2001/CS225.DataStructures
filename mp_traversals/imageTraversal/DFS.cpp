@@ -48,7 +48,7 @@ DFS::DFS(const PNG & png, const Point & start, double tolerance) {
   //Mark first point as "visited" so we don't accidentally go over it
   auto startx = DFSstart.x;
   auto starty = DFSstart.y;
-  visited[startx][starty] = 1;
+  //visited[startx][starty] = 1;
 } //EoF
 
 /**
@@ -59,7 +59,7 @@ ImageTraversal::Iterator DFS::begin() {
   //Return iterator starting at first point
   //Iterator contains identical info, but needs 'this' to be passed in so it knows
   //What it wants to iterate on
-  return ImageTraversal::Iterator();
+  return ImageTraversal::Iterator(this, DFSpng, DFSstart, DFStolerance);
 }
 
 /**
@@ -105,4 +105,12 @@ Point DFS::peek() const {
 bool DFS::empty() const {
   /** @todo [Part 1] */
   return DFStraversal.empty();
+}
+
+int DFS::getVisited(Point visitPoint){
+  return visited[visitPoint.x][visitPoint.y];
+}
+
+void DFS::setVisited(Point visitPoint){
+  visited[visitPoint.x][visitPoint.y] = 1;
 }
