@@ -13,6 +13,7 @@
 #include "BFS.h"
 
 using namespace cs225;
+using std::queue;
 
 /**
  * Initializes a breadth-first ImageTraversal on a given `png` image,
@@ -24,6 +25,25 @@ using namespace cs225;
  */
 BFS::BFS(const PNG & png, const Point & start, double tolerance) {  
   /** @todo [Part 1] */
+  //Identical to DFS constructor
+  //Implement queue instead of stack, as we want to look at the first point
+  BFStolerance = tolerance;
+  BFSpng = png;
+  BFSstart = start;
+  BFStraversal.push(BFSstart);
+  unsigned width = png.width();
+  unsigned height = png.height();
+  visited.resize(width);
+  for(unsigned i = 0; i < width; i++){
+    visited[i].resize(height);
+    for(unsigned j = 0; j < height; j++){
+      visited[i][j] = 0;
+    }
+  }
+  //Set start point to visited
+  auto startx = start.x;
+  auto starty = start.y;
+  visited[startx][starty] = 1;
 }
 
 /**
@@ -42,19 +62,24 @@ ImageTraversal::Iterator BFS::end() {
   return ImageTraversal::Iterator();
 }
 
+//Functions are similar to DFS, just with queue
+
 /**
  * Adds a Point for the traversal to visit at some point in the future.
  */
 void BFS::add(const Point & point) {
   /** @todo [Part 1] */
-}
+  BFStraversal.push(point);
+} //EoF
 
 /**
  * Removes and returns the current Point in the traversal.
  */
 Point BFS::pop() {
   /** @todo [Part 1] */
-  return Point(0, 0);
+  Point returnpoint = BFStraversal.front();
+  BFStraversal.pop();
+  return returnpoint;
 }
 
 /**
@@ -62,7 +87,8 @@ Point BFS::pop() {
  */
 Point BFS::peek() const {
   /** @todo [Part 1] */
-  return Point(0, 0);
+  Point returnpoint = BFStraversal.front();
+  return returnpoint;
 }
 
 /**
@@ -70,5 +96,5 @@ Point BFS::peek() const {
  */
 bool BFS::empty() const {
   /** @todo [Part 1] */
-  return true;
+  return BFStraversal.empty();
 }

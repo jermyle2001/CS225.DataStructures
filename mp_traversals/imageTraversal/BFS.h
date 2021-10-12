@@ -8,6 +8,7 @@
 #include <cmath>
 #include <list>
 #include <queue>
+#include <vector>
 
 #include "../cs225/PNG.h"
 #include "../Point.h"
@@ -35,4 +36,14 @@ public:
 private:
   /** @todo [Part 1] */
   /** add private members here*/
+  PNG BFSpng;
+  Point BFSstart;
+  double BFStolerance;
+  //Use a queue instead of a stack, since we want to visit first point added
+  std::queue<Point> BFStraversal;
+  //Similar to DFS, keep track of what's been visited via 2D vector
+  std::vector<std::vector<int>> visited;
+
+
+
 };

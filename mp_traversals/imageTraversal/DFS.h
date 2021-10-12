@@ -8,6 +8,7 @@
 #include <cmath>
 #include <list>
 #include <stack>
+#include <vector>
 
 #include "../cs225/PNG.h"
 #include "../Point.h"
@@ -35,4 +36,13 @@ public:
 private:
 	/** @todo [Part 1] */
 	/** add private members here*/
+  double DFStolerance;
+  PNG DFSpng;
+  Point DFSstart;
+  //Stack for point storage
+  std::stack<Point> DFStraversal;
+  //We want to store where we visited, implement a vector
+  //Array is too unwieldly, would require to copy every time
+  //Vector needs to be nested
+  std::vector<std::vector<int>> visited;
 };

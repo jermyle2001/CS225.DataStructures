@@ -33,7 +33,17 @@ double ImageTraversal::calculateDelta(const HSLAPixel & p1, const HSLAPixel & p2
  */
 ImageTraversal::Iterator::Iterator() {
   /** @todo [Part 1] */
+  currentPoint = Point(0,0); //Just start at 0,0 ig
 }
+
+ImageTraversal::Iterator::Iterator(ImageTraversal* traversal, PNG png, Point start, double tolerance) {
+  IteratorPNG = png;
+  IteratorStart = start;
+  IteratorTolerance = tolerance;
+  TraversalRef = traversal;
+  currentPoint = traversal->peek(); //currentPoint should contain the point we're looking at
+  //meaning we would want to "peek" at whatever's at the top of the stack
+} //EoF
 
 /**
  * Iterator increment opreator.
@@ -42,6 +52,8 @@ ImageTraversal::Iterator::Iterator() {
  */
 ImageTraversal::Iterator & ImageTraversal::Iterator::operator++() {
   /** @todo [Part 1] */
+  //Add potential future points, right down left up
+
   return *this;
 }
 
