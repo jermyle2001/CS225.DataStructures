@@ -48,7 +48,7 @@ DFS::DFS(const PNG & png, const Point & start, double tolerance) {
   //Mark first point as "visited" so we don't accidentally go over it
   auto startx = DFSstart.x;
   auto starty = DFSstart.y;
-  //visited[startx][starty] = 1;
+  visited[startx][starty] = 1;
 } //EoF
 
 /**
@@ -86,6 +86,9 @@ Point DFS::pop() {
   /** @todo [Part 1] */
   //Get value at top of stack, pop, return
   Point returnPoint = DFStraversal.top();
+  if(DFStraversal.empty()){
+    return Point(-1, -1);
+  }
   DFStraversal.pop();
   return returnPoint;
 }
@@ -96,6 +99,9 @@ Point DFS::pop() {
 Point DFS::peek() const {
   /** @todo [Part 1] */
   //Just return the top
+  if(DFStraversal.empty()){
+    return Point(-1, -1);
+  }
   return DFStraversal.top();
 }
 

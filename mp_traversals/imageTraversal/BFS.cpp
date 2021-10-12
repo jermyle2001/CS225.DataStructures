@@ -78,6 +78,9 @@ void BFS::add(const Point & point) {
 Point BFS::pop() {
   /** @todo [Part 1] */
   Point returnpoint = BFStraversal.front();
+  if(BFStraversal.empty()){
+    return Point(-1, -1);
+  }
   BFStraversal.pop();
   return returnpoint;
 }
@@ -88,6 +91,9 @@ Point BFS::pop() {
 Point BFS::peek() const {
   /** @todo [Part 1] */
   Point returnpoint = BFStraversal.front();
+  if(BFStraversal.empty()){
+    return Point(-1, -1);
+  }
   return returnpoint;
 }
 
