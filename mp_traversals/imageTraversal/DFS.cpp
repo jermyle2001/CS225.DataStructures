@@ -48,7 +48,7 @@ DFS::DFS(const PNG & png, const Point & start, double tolerance) {
   //Mark first point as "visited" so we don't accidentally go over it
   auto startx = DFSstart.x;
   auto starty = DFSstart.y;
-  visited[startx][starty] = 1;
+  //visited[startx][starty] = 1;
 } //EoF
 
 /**

@@ -153,7 +153,7 @@ Point ImageTraversal::Iterator::operator*() {
  */
 bool ImageTraversal::Iterator::operator!=(const ImageTraversal::Iterator &other) {
   /** @todo [Part 1] */
-  if(currentPoint == other.currentPoint){
+  if(this->currentPoint == other.currentPoint){ //If currentPoint == other.currentPoint, then statement is false
     return false;
   }
   else{

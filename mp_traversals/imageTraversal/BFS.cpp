@@ -43,7 +43,7 @@ BFS::BFS(const PNG & png, const Point & start, double tolerance) {
   //Set start point to visited
   auto startx = start.x;
   auto starty = start.y;
-  visited[startx][starty] = 1;
+  //visited[startx][starty] = 1;
 }
 
 /**
