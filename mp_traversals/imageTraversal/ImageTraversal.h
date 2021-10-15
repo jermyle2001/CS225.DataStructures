@@ -7,6 +7,7 @@
 #include "../cs225/HSLAPixel.h"
 #include "../cs225/PNG.h"
 #include "../Point.h"
+#include <vector>
 
 using namespace cs225;
 
@@ -29,7 +30,7 @@ public:
   class Iterator : std::iterator<std::forward_iterator_tag, Point> {
   public:
     Iterator(); //Default constructor with nothing passed in
-    Iterator(ImageTraversal* traversal, PNG png, Point start, double tolerance);
+    Iterator(ImageTraversal* traversal, PNG png, Point start, double tolerance, std::vector<std::vector<int>> visited);
     //Added in iterator that takes in traversal for iteration, png, start, and tolerance
 
     Iterator & operator++();
@@ -50,8 +51,7 @@ public:
 
     ImageTraversal* TraversalRef; //Added in pointer Traversal for iterator's operations
     Point currentPoint; //Added in current point to keep track of where we are iterating;
-    //^^Would have tried an x and y, but operations require that we return points
-
+    std::vector<std::vector<int>> IteratorVisited;
 
 
   };

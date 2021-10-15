@@ -1,6 +1,7 @@
 #include <cmath>
 #include <iterator>
 #include <iostream>
+#include <vector>
 
 #include "../cs225/HSLAPixel.h"
 #include "../cs225/PNG.h"
@@ -36,12 +37,13 @@ ImageTraversal::Iterator::Iterator() {
   currentPoint = Point(-1, -1); //End iterator, outside is (-1, -1)
 }
 
-ImageTraversal::Iterator::Iterator(ImageTraversal* traversal, PNG png, Point start, double tolerance) {
+ImageTraversal::Iterator::Iterator(ImageTraversal* traversal, PNG png, Point start, double tolerance, std::vector<std::vector<int>> visited) {
   IteratorPNG = png;
   IteratorStart = start;
   IteratorTolerance = tolerance;
   TraversalRef = traversal;
   currentPoint = TraversalRef->peek(); //currentPoint should contain the point we're looking at
+  IteratorVisited = visited;
   //meaning we would want to "peek" at whatever's at the top of the stack
 } //EoF
 
@@ -56,73 +58,81 @@ ImageTraversal::Iterator & ImageTraversal::Iterator::operator++() {
   //Do it from current point, already set up in constructor
   //Pop from whatever it's from first/remove from list, mark as visited (1)
 
-  currentPoint = TraversalRef->pop();  //Pop off top, pop function also returns what it popped so
+  Point poppedpoint = TraversalRef->pop();  //Pop off top, pop function also returns what it popped so
   //we don't need to peek
-
+  //Set point to visited
+  TraversalRef->setVisited(poppedpoint);
   //Create a pixel for start, we will use the delta operation but that only takes in HSLAPixels
   //and not points
   
-  HSLAPixel & startPixel = IteratorPNG.getPixel(IteratorStart.x, IteratorStart.y);
+  HSLAPixel & startPixel = IteratorPNG.getPixel(poppedpoint.x, poppedpoint.y);
 
 
   //For following functions, ignore if not w/in bounds
   //Check right point (x+1, y)
-  if(currentPoint.x + 1 < IteratorPNG.width()){ //Assumes y is valid
+  Point right(poppedpoint.x + 1, poppedpoint.y);
+  if(right.x < IteratorPNG.width() && right.x >= 0 && right.y < IteratorPNG.height() && right.y >= 0){ //Assumes y is valid
     //Create a second pixel for comparison
-    HSLAPixel & otherPixel = IteratorPNG.getPixel(currentPoint.x + 1, currentPoint.y);
+    HSLAPixel & otherPixel = IteratorPNG.getPixel(right.x, right.y);
+    Point otherPoint(right.x, right.y);
     //Don't want to revisit, check if point is visited
-    Point otherPoint(currentPoint.x + 1, currentPoint.y);
-    if(TraversalRef->getVisited(otherPoint) == 0){ //Check if point was visited
       //Calculate delta and compare
-      if(calculateDelta(startPixel, otherPixel) <= IteratorTolerance){
+      if(calculateDelta(startPixel, otherPixel) < IteratorTolerance){
         //IF w/in tolerance, add point to traversal
         //Add only accepts Points, create a temporary point
         TraversalRef->add(otherPoint);
       }
-    }
   }
   
   //Check down
-  if(currentPoint.y + 1 < IteratorPNG.height()){ //Assumes x is valid
+  Point down(poppedpoint.x, poppedpoint.y + 1);
     //Same as right but point is below
-    HSLAPixel & otherPixel = IteratorPNG.getPixel(currentPoint.x, currentPoint.y + 1);
-    Point otherPoint(currentPoint.x, currentPoint.y + 1);
-    if(TraversalRef->getVisited(otherPoint) == 0){
+    if(down.x <= IteratorPNG.width() && down.x >= 0 && down.y <= IteratorPNG.height() && down.y >= 0){
+    HSLAPixel & otherPixel = IteratorPNG.getPixel(down.x, down.y);
+    Point otherPoint(down.x, down.y);
       //Calculate delta and compare
       if(calculateDelta(startPixel, otherPixel) <= IteratorTolerance){
         //Add point to traversal if w/in tolerance
         TraversalRef->add(otherPoint);
       }
-    }
   }
 
   //Check left
-  if(currentPoint.x - 1 >= 0){ //Can technically be zero, assumes x was valid and y is valid
+  Point left(poppedpoint.x - 1, poppedpoint.y);
+  if(left.x <= IteratorPNG.width() && left.x >= 0 && left.y < IteratorPNG.height() && left.y >= 0 ){
     //Same as right but point is left
-    HSLAPixel & otherPixel = IteratorPNG.getPixel(currentPoint.x - 1, currentPoint.y);
-    Point otherPoint(currentPoint.x - 1, currentPoint.y);
-    if(TraversalRef->getVisited(otherPoint) == 0){
+    HSLAPixel & otherPixel = IteratorPNG.getPixel(left.x, left.y);
+    Point otherPoint(left.x, left.y);
       if(calculateDelta(startPixel, otherPixel) <= IteratorTolerance){
         TraversalRef->add(otherPoint);
-      }
     } 
   }
 
-  if(currentPoint.y - 1 >= 0){ //Can technically be zero, assumes y was valid and x is valid
+  Point up(poppedpoint.x, poppedpoint.y - 1);
+  if(up.x < IteratorPNG.width() && up.x >= 0 && up.y < IteratorPNG.height() && up.y >= 0){
     //Same as right but point is up
-    HSLAPixel & otherPixel = IteratorPNG.getPixel(currentPoint.x, currentPoint.y - 1);
-    Point otherPoint(currentPoint.x, currentPoint.y - 1);
-    if(TraversalRef->getVisited(otherPoint) ==  0){
+    Point otherPoint(up.x, up.y);
+    HSLAPixel & otherPixel = IteratorPNG.getPixel(up.x, up.y);
       if(calculateDelta(startPixel, otherPixel) <= IteratorTolerance){
         TraversalRef->add(otherPoint);
-      }
     }
   }
   //All available neighboring points added to traversal, set current point to visited as well
-  TraversalRef->setVisited(currentPoint);
+  IteratorVisited[poppedpoint.x][poppedpoint.y] = 1;
   //Iterate currentPoint to next top of list
   currentPoint = TraversalRef->peek();
   //Find next non-visited point, popping off any points that have been visited
+  while(TraversalRef->empty() == false && IteratorVisited[TraversalRef->peek().x][TraversalRef->peek().y]){
+    currentPoint = TraversalRef->pop();
+    currentPoint = TraversalRef->peek();
+  }
+  if(TraversalRef->empty() == true){
+    return *this;
+  }
+  currentPoint = TraversalRef->peek();
+  return *this;
+
+  /*
   while(!TraversalRef->empty()){//While list is not empty, find next non-visited point
     if(TraversalRef->getVisited(currentPoint) == 1){
       currentPoint = TraversalRef->pop(); //Pop off visited point from list
@@ -132,7 +142,8 @@ ImageTraversal::Iterator & ImageTraversal::Iterator::operator++() {
       break; //Break loop once non-visited point found
     }
   } 
-
+  currentPoint = TraversalRef->peek();
+  */
   return *this;
 }
 
@@ -160,4 +171,3 @@ bool ImageTraversal::Iterator::operator!=(const ImageTraversal::Iterator &other)
     return true;
   }
 }
-

@@ -25,11 +25,32 @@ V AVLTree<K, V>::find(Node* subtree, const K& key) const
     }
 }
 
+
+
 template <class K, class V>
 void AVLTree<K, V>::rotateLeft(Node*& t)
 {
     functionCalls.push_back("rotateLeft"); // Stores the rotation name (don't remove this)
     // your code here
+    Node* roota;
+    Node* rootb;
+    Node* bleftorig;
+
+    //becomes root, b left points to a
+    //a right becomes b left orig
+    if(t == root){
+        root = t->right;
+    }
+    roota = t;
+    rootb = roota->right;
+    bleftorig = rootb->left;
+    rootb->left = roota;
+    roota->right = bleftorig;
+    t = rootb;
+
+    roota->height = getHeight(roota);
+    rootb->height = getHeight(rootb);
+
 }
 
 template <class K, class V>
@@ -46,6 +67,23 @@ void AVLTree<K, V>::rotateRight(Node*& t)
 {
     functionCalls.push_back("rotateRight"); // Stores the rotation name (don't remove this)
     // your code here
+    //b is on top a is on bottom
+    if(t == root){
+        root = t->left;
+    }
+    Node* roota;
+    Node* rootb;
+    Node* arightorig;
+
+    rootb = t;
+    roota = rootb->left;
+    arightorig = roota->right;
+    roota->right = rootb;
+    rootb->left = arightorig;
+    t = roota;
+
+    roota->height = getHeight(roota);
+    rootb->height = getHeight(rootb);
 }
 
 template <class K, class V>
@@ -53,12 +91,19 @@ void AVLTree<K, V>::rotateRightLeft(Node*& t)
 {
     functionCalls.push_back("rotateRightLeft"); // Stores the rotation name (don't remove this)
     // your code here
+    rotateRight(t->right);
+    rotateLeft(t);
 }
 
 template <class K, class V>
 void AVLTree<K, V>::rebalance(Node*& subtree)
 {
     // your code here
+    //Rotate subtree so that it is balanced. You can assume that node->left and node->right are both balanced.
+    //Four cases to take into account:: ll, lr, rl, and rr 
+
+    //First, find the balance factor (figure out what kind of rotations we need to perform)
+    int balancefactor = getHeight(subtree->left) - getHeight(subtree->right);
 }
 
 template <class K, class V>

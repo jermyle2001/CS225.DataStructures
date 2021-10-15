@@ -232,6 +232,10 @@ class AVLTree
 
     /** This variable tests the order of function calls **/
     std::vector<std::string> functionCalls;
+
+  int getHeight(Node *node){
+    return node ? std::max(getHeight(node->left), getHeight(node->right)) + 1: -1;
+  }
 };
 
 #include "avltree_given.cpp"
