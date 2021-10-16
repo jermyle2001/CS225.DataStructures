@@ -103,19 +103,58 @@ void AVLTree<K, V>::rebalance(Node*& subtree)
     //Four cases to take into account:: ll, lr, rl, and rr 
 
     //First, find the balance factor (figure out what kind of rotations we need to perform)
-    int balancefactor = getHeight(subtree->left) - getHeight(subtree->right);
+    int balancefactor = getHeight(subtree->right) - getHeight(subtree->left);
+
+    //Check if right or left heavy
+    if(balancefactor == -2){ //Left heavy, either rotate right or rotate left right
+
+        int leftbalance = getHeight(subtree->left->right) - getHeight(subtree->left->left); 
+        if(leftbalance < 0){ //Stick case: 
+            rotateRight(subtree);
+        }
+        else{
+            rotateLeftRight(subtree);
+        }
+    }
+    else if(balancefactor == 2){ //Right heavy, either rotate left or rotate rigth left
+        int rightbalance = getHeight(subtree->right->right) - getHeight(subtree->right->left);
+        if(rightbalance > 0){ //Stick case, similar to above
+            rotateLeft(subtree);
+        }
+        else{
+            rotateRightLeft(subtree);
+        }
+    }
+
 }
 
 template <class K, class V>
 void AVLTree<K, V>::insert(const K & key, const V & value)
 {
-    insert(root, key, value);
+
+   insert(root, key, value);
+
 }
 
 template <class K, class V>
 void AVLTree<K, V>::insert(Node*& subtree, const K& key, const V& value)
 {
     // your code here
+    if(!subtree){
+        subtree = new Node(key, value);
+    }
+
+    if(key < subtree->key){
+        insert(subtree->left, key, value);
+    }
+    else if(key > subtree->key){
+        insert(subtree->right, key, value);
+    }
+    else{
+        subtree->value = value;
+    }
+
+    rebalance(subtree);
 }
 
 template <class K, class V>
@@ -132,19 +171,42 @@ void AVLTree<K, V>::remove(Node*& subtree, const K& key)
 
     if (key < subtree->key) {
         // your code here
+        remove(subtree->left, key);
     } else if (key > subtree->key) {
         // your code here
+        remove(subtree->right, key);
     } else {
         if (subtree->left == NULL && subtree->right == NULL) {
             /* no-child remove */
             // your code here
+            delete subtree;
+            subtree = NULL;
+            return;
         } else if (subtree->left != NULL && subtree->right != NULL) {
             /* two-child remove */
             // your code here
-        } else {
+            //key is contained within subtree->left->right somewhere, need to find it
+
+        }
+         else {
             /* one-child remove */
             // your code here
+            if(subtree->right != NULL){
+                //Right subtree exists, delete it
+                Node* tempnode = subtree->right;
+                delete tempnode;
+                tempnode = NULL;
+                subtree->right = NULL;
+            }
+            else{
+                //Else left subtree exists
+                Node* tempnode = subtree->left;
+                delete tempnode;
+                tempnode = NULL;
+                subtree->left = NULL;
+            }
         }
-        // your code here
     }
-}
+    subtree->height = std::max(getHeight(subtree->left), getHeight(subtree->right));
+    rebalance(subtree);
+} //EoF

@@ -1,6 +1,7 @@
 #include "cs225/PNG.h"
 #include <list>
 #include <iostream>
+#include <vector>
 
 #include "colorPicker/ColorPicker.h"
 #include "imageTraversal/ImageTraversal.h"
@@ -18,6 +19,8 @@ using namespace cs225;
  */
 FloodFilledImage::FloodFilledImage(const PNG & png) {
   /** @todo [Part 2] */
+  //Constructor: only image passed through so set image equal
+  imagePNG = png;
 }
 
 /**
@@ -29,6 +32,11 @@ FloodFilledImage::FloodFilledImage(const PNG & png) {
  */
 void FloodFilledImage::addFloodFill(ImageTraversal & traversal, ColorPicker & colorPicker) {
   /** @todo [Part 2] */
+  //Implement vector to store pointers to traversals
+  //Store said traversal/colorpicker into corresponding vectors
+  animateTraversal.push_back(&traversal);
+  animateColor.push_back(&colorPicker);
+
 }
 
 /**
@@ -53,5 +61,34 @@ void FloodFilledImage::addFloodFill(ImageTraversal & traversal, ColorPicker & co
 Animation FloodFilledImage::animate(unsigned frameInterval) const {
   Animation animation;
   /** @todo [Part 2] */
+  //Add first frame, which is starting image
+  PNG animatePNG = imagePNG;
+  unsigned i = 0;
+  unsigned traversalSize = animateTraversal.size();
+  int framecounter = 0;
+  framecounter++;
+  for(i = 0; i < traversalSize; i++){ //Iterate through the traversals specified by vector
+    //Utilise iterator we created earlier to iterate throughout png to change its appearance based on 
+    //frame rate
+    ImageTraversal::Iterator animateIterator = animateTraversal[i]->begin();
+    animation.addFrame(animatePNG);
+    for(animateIterator = animateTraversal[i]->begin(); animateIterator != animateTraversal[i]->end(); ++animateIterator){
+      unsigned x = (*animateIterator).x; //Dereference iterator/pointer turning it into reference, dereference such
+      unsigned y = (*animateIterator).y;
+      HSLAPixel & animatePixel = animatePNG.getPixel(x, y);
+      HSLAPixel colorPixel = animateColor[i]->getColor(x, y); //Can't use reference here - won't work because nonpermanent..?
+      animatePixel = colorPixel;
+      if(framecounter % frameInterval == 0){
+        animation.addFrame(animatePNG);
+      }
+      framecounter++;
+    }
+    //Now add final frame if needed
+    animation.addFrame(animatePNG);
+    framecounter = 1;
+
+  }
+  //Return animation after going through all iterators and colorPickers
+
   return animation;
 }
