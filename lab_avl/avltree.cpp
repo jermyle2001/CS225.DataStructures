@@ -25,7 +25,32 @@ V AVLTree<K, V>::find(Node* subtree, const K& key) const
     }
 }
 
+template <class K, class V>
+int AVLTree<K, V>::updateHeight(Node* subtree){
+    //Recusive function, updates the height of our current node
+    if(subtree == NULL){
+        return -1; //Base case: recurse if NULL, height is -1
+    }
+    //Otherwise, return larger height of both trees
+    return 1 + std::max(updateHeight(subtree->left), updateHeight(subtree->right));
+} //Eof
 
+template <class K, class V>
+void AVLTree<K, V>::calculateHeight(Node*& subtree){
+    if(subtree->left == NULL && subtree->right == NULL){ //Base case: both left and right are NULL
+        subtree->height = 0; //No nodes below it, our height is 0
+    }
+    else if(subtree->left == NULL){ //Check right side if left side is NULL
+        subtree->height = 1 + subtree->right->height;
+    }
+    else if(subtree->right == NULL){ //Check left side if right side is NULL
+        subtree->height = 1 + subtree->left->height;
+    }
+    else{
+        subtree->height = std::max(subtree->right->height, subtree->left->height) + 1; 
+        //Else the height is the greater of both of its subtrees
+    }
+} //EoF
 
 template <class K, class V>
 void AVLTree<K, V>::rotateLeft(Node*& t)
@@ -36,11 +61,15 @@ void AVLTree<K, V>::rotateLeft(Node*& t)
     Node* rootb;
     Node* bleftorig;
 
-    //becomes root, b left points to a
-    //a right becomes b left orig
-    if(t == root){
-        root = t->right;
+    //Check if operation is possible
+    if(t == NULL || t->right == NULL){
+        return;
     }
+
+    //becomes root, b left points to a
+    //Root a is the old root
+    //Root b is the new root
+    //bleftorig is the child we will move
     roota = t;
     rootb = roota->right;
     bleftorig = rootb->left;
@@ -48,8 +77,9 @@ void AVLTree<K, V>::rotateLeft(Node*& t)
     roota->right = bleftorig;
     t = rootb;
 
-    roota->height = getHeight(roota);
-    rootb->height = getHeight(rootb);
+    //Update heights
+    roota->height = updateHeight(roota);
+    rootb->height = updateHeight(rootb);
 
 }
 
@@ -60,20 +90,28 @@ void AVLTree<K, V>::rotateLeftRight(Node*& t)
     // Implemented for you:
     rotateLeft(t->left);
     rotateRight(t);
-}
+} //EoF
 
+template <class K, class V>
+void AVLTree<K, V>::rotateRightLeft(Node*& t)
+{
+
+    functionCalls.push_back("rotateRightLeft");
+    rotateRight(t->right);
+    rotateLeft(t);
+}
 template <class K, class V>
 void AVLTree<K, V>::rotateRight(Node*& t)
 {
     functionCalls.push_back("rotateRight"); // Stores the rotation name (don't remove this)
     // your code here
     //b is on top a is on bottom
-    if(t == root){
-        root = t->left;
+    if(t == NULL || t->left == NULL){
+        return;
     }
-    Node* roota;
-    Node* rootb;
-    Node* arightorig;
+    Node* roota; //New root
+    Node* rootb; //Old root
+    Node* arightorig; //Child we will move
 
     rootb = t;
     roota = rootb->left;
@@ -82,51 +120,57 @@ void AVLTree<K, V>::rotateRight(Node*& t)
     rootb->left = arightorig;
     t = roota;
 
-    roota->height = getHeight(roota);
-    rootb->height = getHeight(rootb);
-}
+    roota->height = updateHeight(roota);
+    rootb->height = updateHeight(rootb);
+
+} //EoF
 
 template <class K, class V>
-void AVLTree<K, V>::rotateRightLeft(Node*& t)
-{
-    functionCalls.push_back("rotateRightLeft"); // Stores the rotation name (don't remove this)
-    // your code here
-    rotateRight(t->right);
-    rotateLeft(t);
-}
-
-template <class K, class V>
-void AVLTree<K, V>::rebalance(Node*& subtree)
-{
-    // your code here
-    //Rotate subtree so that it is balanced. You can assume that node->left and node->right are both balanced.
-    //Four cases to take into account:: ll, lr, rl, and rr 
-
-    //First, find the balance factor (figure out what kind of rotations we need to perform)
-    int balancefactor = getHeight(subtree->right) - getHeight(subtree->left);
-
-    //Check if right or left heavy
-    if(balancefactor == -2){ //Left heavy, either rotate right or rotate left right
-
-        int leftbalance = getHeight(subtree->left->right) - getHeight(subtree->left->left); 
-        if(leftbalance < 0){ //Stick case: 
-            rotateRight(subtree);
-        }
-        else{
-            rotateLeftRight(subtree);
-        }
+void AVLTree<K, V>::rebalance(Node*& subtree){
+    //Base cases: make sure the operation is valid
+    if(subtree == NULL){
+        return;
     }
-    else if(balancefactor == 2){ //Right heavy, either rotate left or rotate rigth left
-        int rightbalance = getHeight(subtree->right->right) - getHeight(subtree->right->left);
-        if(rightbalance > 0){ //Stick case, similar to above
-            rotateLeft(subtree);
-        }
-        else{
+    
+    //The height of the subtree might not be right, make sure to update it
+
+    //Get the balance of the tree
+    int balance = heightOrNeg1(subtree->right) - heightOrNeg1(subtree->left);
+
+    //Check to see if we even need to balance the tree (abs <= 1)
+    if(std::abs(balance) <= 1){
+        return;
+    }
+
+    //Four cases divided into two sets:
+    //Set 1: Left heavy
+    if(balance < 0){ //Negative number indicates a left heavy tree
+        //Calculate balance of subtree, check if right or left heavy
+        int subtreebalance = heightOrNeg1(subtree->left->left) - heightOrNeg1(subtree->left->right);
+        //Case 1: tree is left heavy, subtree is right heavy (elbow)
+        if(subtreebalance > 0){ //If > 0, subtree is right heavy (elbow), rotate rightleft
             rotateRightLeft(subtree);
         }
+        //Case 2: tree is left heavy, subtree is left heavy (stick)
+        else{
+            rotateLeft(subtree);
+        }
     }
-
-}
+    //Set 2: Right heavy
+    else{
+        //Calculate balance of subtree, check if right or left heavy
+        int subtreebalance = heightOrNeg1(subtree->right->left) - heightOrNeg1(subtree->right->right);
+        //Case 3: tree is right heavy, subtree is left heavy (elbow)
+        if(subtreebalance < 0){ //If < 0, subtree is elbow, rotate leftright
+            rotateLeftRight(subtree);
+        }
+        //Case 4: tree is right heavy, subtree is right heavy (stick)
+        else{
+            rotateRight(subtree);
+        }
+    }
+    subtree->height = heightOrNeg1(subtree);
+} //EoF
 
 template <class K, class V>
 void AVLTree<K, V>::insert(const K & key, const V & value)
@@ -136,25 +180,29 @@ void AVLTree<K, V>::insert(const K & key, const V & value)
 
 }
 
+
+
 template <class K, class V>
 void AVLTree<K, V>::insert(Node*& subtree, const K& key, const V& value)
 {
     // your code here
-    if(!subtree){
-        subtree = new Node(key, value);
+    if(subtree == NULL){ //Base case, create new node
+        Node* newNode = new Node(key, value);
+        subtree = newNode;
     }
-
-    if(key < subtree->key){
+    else if(key < subtree->key){
         insert(subtree->left, key, value);
+        rebalance(subtree);
     }
     else if(key > subtree->key){
         insert(subtree->right, key, value);
+        rebalance(subtree);
     }
     else{
         subtree->value = value;
+        return;
     }
-
-    rebalance(subtree);
+    subtree->height = 1 + std::max(heightOrNeg1(subtree->left), heightOrNeg1(subtree->right));
 }
 
 template <class K, class V>
@@ -181,12 +229,22 @@ void AVLTree<K, V>::remove(Node*& subtree, const K& key)
             // your code here
             delete subtree;
             subtree = NULL;
-            return;
         } else if (subtree->left != NULL && subtree->right != NULL) {
             /* two-child remove */
             // your code here
             //key is contained within subtree->left->right somewhere, need to find it
-
+            //Get right most node of tree
+            Node*& rightMostNode = subtree->left;
+            while(rightMostNode->right != NULL){
+                rightMostNode = rightMostNode->right;
+            }
+            //All we need to do is swap the IOP(right most node of left subtree) and subtree
+            //Swap function swaps the keys and values, doesn't change the nodes and what they're pointing to
+            swap(rightMostNode, subtree);
+            //Subtree and rightMostNode have been swapped, delete node pointed to by rightMostNode 
+            //(which is actually contains node subtree's values)
+            remove(subtree->left, key);
+            rebalance(rightMostNode);
         }
          else {
             /* one-child remove */
@@ -207,6 +265,6 @@ void AVLTree<K, V>::remove(Node*& subtree, const K& key)
             }
         }
     }
-    subtree->height = std::max(getHeight(subtree->left), getHeight(subtree->right));
+    subtree->height = std::max(updateHeight(subtree->left), updateHeight(subtree->right));
     rebalance(subtree);
 } //EoF
