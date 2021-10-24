@@ -338,13 +338,77 @@ class BTree
  * the sorted order of elements. If val occurs in elements, then this returns
  * the index of val in elements.
  */
+
+
+template <class T, class C>
+size_t insertion_idx(const std::vector<T>& elements, const C& val, size_t l, size_t h){ //l is low, h is high
+    //Note: this is a helper function that was added in! Read the original function's approach first.
+    //Also, include this function above the original function, otherwise it will break.
+    /*
+    - Our value falls somewhere in our tree/array. We have 4 cases to consider (again).
+    - We pass through a lower end and higher end of our node/array, getting the middle
+    -  and continuously splitting our node into halves. 
+    - The following details the 4 cases we consider:
+    - 1. Base case: if the lower index == higher index, then that means we only have one index
+    -    remaining. Thus, we have found our index for insertion, and return either l or h.
+    - 2. If our value is greater than the value in the middle of our node then the value is located in 
+    -    the second half of the node. To avoid recomparing the same values, add 1 to the middle index
+    -    and evaluate b/w m + 1 and h.
+    - 3. If our value is less than the value in the middle of our node, similar to case 2 but we evaluate b/w 
+    -    first half of the node and m - 1.
+    - 4. If the value is equal to the value in the middle, then our middle is our insertion index
+    -    and thus we return m.
+    */
+    if(l == h){ //Base case is when l == h
+        return l;
+    }
+    size_t m = (l + h)/2; //Store middle index, we're going to compare halves and recurse
+    if(val > elements[m]){
+        return insertion_idx(elements, val, m+1, h); //Val is in higher half, add 1 to m to avoid reusing m
+    } 
+    else if(val < elements[m]){
+        return insertion_idx(elements, val, l, m-1); //Val is in lower half, subtract 1 from m to avoid reusing m
+    }
+    else{
+        return m;
+    }
+}
+
 template <class T, class C>
 size_t insertion_idx(const std::vector<T>& elements, const C& val)
 {
     /* TODO Your code goes here! */
+    /*
+    - This function returns the index that an insertion would take place in.
+    - We have four initial base cases, with the fourth one being recursive:
+    - 1. If the vector of elements is empty, i.e. there are no nodes/keys, then
+    -    our index is zero, since there are no elements.
+    - 2. If our value is less than the first element, then we need to insert in 
+    -    front of our current array, i.e. index 0.
+    - 3. If our value is greater than the largest value in our node, i.e. the last
+    -    value in our node, then we insert at the end of our array, i.e. index of the
+    -    size of the array, since our array indexes start at 0.
+    - 4. Otherwise, the value falls somewhere in our array. We will compare values 
+    -    of the lower and higher ends of subtree/subnodes to see where we want 
+    -    to insert our node.
+    -
+    - SIDENOTE: based on the find function's convention, it appears that the index
+    -  that gets returned is actually the first valid index for insertion?
+    */
 
-    return 5;
+    for(unsigned i = 0; i < elements.size(); i++){
+        if(elements[i] > val){
+            return i;
+        }
+        else if(elements[i] == val){
+            return i;
+        }
+    }
+    return elements.size();
 }
+
+
+
 
 #include "btree_given.cpp"
 #include "btree.cpp"
