@@ -259,7 +259,27 @@ class KDTree
     /**
      * @todo Add your helper functions here.
      */
-};
+
+    //Added in partition helper function
+    /*
+      Note: vector has to be passed in as reference so that we can change it. The following follows the 
+        AMA slides' code.
+    */
+    unsigned partition(vector<Point<Dim>>& list, unsigned dimension, unsigned left, unsigned right, unsigned pivotIndex);
+
+    //Same reasoning for creating references as above: we want to be able to change the data later, so
+    //  need to create references to our data.
+    Point<Dim>& quickSelect(vector<Point<Dim>>& list, unsigned dimension, unsigned left, unsigned right, unsigned k);
+
+    //Add in a tree building function to help with constructor, follow AMA slides to implement
+    KDTreeNode* buildTree(vector<Point<Dim>>& pointsList, int dimension, unsigned left, unsigned right);
+
+    //Added in a copy function to assist with the copy constructor
+    void KDTreeCopy(KDTreeNode* thisSubroot, KDTreeNode* otherSubroot);
+
+    void KDTreeDeletion(KDTreeNode* subRoot);
+};  
+
 
 #include "kdtree.hpp"
 #include "kdtree_extras.hpp"
