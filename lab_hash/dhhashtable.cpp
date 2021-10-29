@@ -81,8 +81,32 @@ void DHHashTable<K, V>::insert(K const& key, V const& value)
      *  forget to mark the cell for probing with should_probe!
      */
 
-    (void) key;   // prevent warnings... When you implement this function, remove this line.
-    (void) value; // prevent warnings... When you implement this function, remove this line.
+    elems++;
+    if(shouldResize()){
+        resizeTable();
+    }
+    int hash1 = hashes::hash(key, size);
+    int hash2 = hashes::secondary_hash(key, size);
+
+    /*
+        If there's nothing at the hash1 index, then we can insert directly
+    */
+    if(!table[hash1]){
+        table[hash1] = new std::pair<K, V>(key, value);
+        should_probe[hash1] = true;
+    }
+    else{
+        /*
+            Otherwise we follow a procedure similar to lphashtable, but
+            with a different method of calculating collision avoidance.
+        */
+        int idx = hash1;
+        while(should_probe[idx] && table[idx]){
+            idx = (idx + hash2) % size;
+        }
+        table[idx] = new std::pair<K, V>(key, value);
+        should_probe[idx] = true;
+    }
 }
 
 template <class K, class V>
@@ -91,6 +115,15 @@ void DHHashTable<K, V>::remove(K const& key)
     /**
      * @todo Implement this function
      */
+    /*
+        Similar to Linear Probing Hashing. Look at lphashtable.cpp for an explanation.
+    */
+    int idx = findIndex(key);
+    if(idx != -1){
+        delete table[idx];
+        table[idx] = NULL;
+        elems--;
+    }
 }
 
 template <class K, class V>
@@ -99,6 +132,37 @@ int DHHashTable<K, V>::findIndex(const K& key) const
     /**
      * @todo Implement this function
      */
+
+    /*
+        First we get our two hash indexes for calculation
+    */
+    int hash1 = hashes::hash(key, size);
+    int hash2 = hashes::secondary_hash(key, size);
+    int idx = hash1;
+    /*
+        Next, check if it's in the default spot. If not, check its
+        alternate spots by adding second hash value.
+    */
+    if(table[hash1] != NULL && table[hash1]->first == key){
+        return hash1;
+    }
+
+    /*
+        Key is NOT in its supposed original position. Check its double hashing
+        locations until we hit a should_probe = false
+    */
+    while(should_probe[idx]){
+        if(table[idx] != NULL && table[idx]->first == key){
+            return idx;
+        }
+        idx = (idx + hash2) % size;
+
+    }
+    /*
+        The key was not found in the list if we iterate through all of the 
+        doube hash's values. Return -1.
+    */
+
     return -1;
 }
 

@@ -15,11 +15,16 @@ bool KDTree<Dim>::smallerDimVal(const Point<Dim>& first,
     /**
      * @todo Implement this function!
      */
+
     if(second[curDim] < first[curDim]){
       return false;
     }
-    else{
+    else if(first[curDim] < second[curDim]){
       return true;
+    }
+    else{
+      return(first < second);
+
     }
 
 } //EoF
@@ -33,27 +38,22 @@ bool KDTree<Dim>::shouldReplace(const Point<Dim>& target,
      * @todo Implement this function!
      */
     //Sum squared dim value differences
-    int currentSum = 0;
-    int potentialSum = 0;
+    double currentSum = 0;
+    double potentialSum = 0;
     for(int i = 0; i < Dim; i++){
-      int currentDistance = (target[i] - currentBest[i]) * (target[i] - currentBest[i]);
-      int potentialDistance = (target[i] - potential[i]) * (target[i] - potential[i]);
+      double currentDistance = (target[i] - currentBest[i]) * (target[i] - currentBest[i]);
+      double potentialDistance = (target[i] - potential[i]) * (target[i] - potential[i]);
       currentSum = currentSum + currentDistance;
       potentialSum = potentialSum + potentialDistance;
     }
     if(potentialSum < currentSum){
       return true;
     }
-    else if(potentialSum == currentSum){
-      if(potential < currentBest){
-        return true;
-      }
-      else{
-        return false;
-      }
+    else if(currentSum < potentialSum){
+      return false;
     }
     else{
-      return false;
+      return (potential < currentBest);
     }
 } //EoF
 
@@ -78,6 +78,10 @@ KDTree<Dim>::KDTree(const vector<Point<Dim>>& newPoints)
    //Now build new tree using helper function. We start at dimension 0, with left being at the very start
    // and right being at the very end, which is the same as pointsVector.size() - 1
    root = buildTree(pointsVector, 0, 0, pointsVector.size() - 1);
+   size = newPoints.size();
+   if(root == NULL){
+     std::cout << "The root is NULL!" << std::endl;
+   }
 }
 
 template <int Dim>
@@ -109,11 +113,16 @@ const KDTree<Dim>& KDTree<Dim>::operator=(const KDTree<Dim>& rhs) {
       the KDTree stored in rhs.
   */
   //Delete tree at root - don't need to check if NULL or not, since the deletion function does that already
-  KDTreeDeletion(root);
-  //Now copy over the new tree
-  copy(this->root, rhs.root);
-  //Also update the size of our root
-  size = rhs.size;
+  if(this != &rhs){
+    KDTreeDeletion(root);
+    //Now copy over the new tree
+    copy(this->root, rhs.root);
+    //Also update the size of our root
+    size = rhs.size;
+  }
+  if(root == NULL){
+     std::cout << "The root is NULL!" << std::endl;
+   }
   return *this;
 }
 
@@ -161,7 +170,7 @@ Point<Dim> KDTree<Dim>::findNearestNeighbor(const Point<Dim>& query) const
     //Note: we need to create a helper function to pass through the appropriate variables for recursion.
     //  It will be included directly below.
 
-    return Point<Dim>();
+    return FNNHelper(query, root, 0);
 }
 
 /*
@@ -170,139 +179,98 @@ Point<Dim> KDTree<Dim>::findNearestNeighbor(const Point<Dim>& query) const
 
 //Below is the helper function for findNearestNeighbor
 template <int Dim>
-Point<Dim> KDTree<Dim>::FNNHelper(const Point<Dim> & query, KDTreeNode* subRoot, int dimension)
+Point<Dim> KDTree<Dim>::FNNHelper(const Point<Dim> & query, KDTreeNode* subRoot, int dimension) const
 {
   /*
-    We pass through the subroot we look at, the point we wish to find the closest neighbor to ("query"), and 
-      the dimension we're currently analyzing.
+    Follow AMA Slides
   */
-
-  //First we create a point which is our subroot's point. We will use this in comparison later.
-  Point<Dim> currentBest = subRoot->point;
-  //Check to see if current our current point has any children/bounds are valid - if not, then we
-  //  can recurse with our remaining point, which may not necessarily be the best point.
-  if(subRoot->left == NULL && subRoot->right == NULL){
+  
+  //Step 1: Base Case
+  if(subRoot->right == NULL && subRoot->left == NULL){
     return subRoot->point;
   }
 
   /*
-    Next, we decide whether or not we should traverse each tree. Specifically, we will consider whether 
-      the left tree is worth traversing first, and then the right. We compare with respect to our current
-      dimension.
-
-    Additionally, we create a "flag" to help us determine which direction we have traverse in. This flag will 
-      vary b/w 1 and 0, with 1 representing "true" or we have traversed the left tree, and 0 being otherwise.
-      The flag will be used later on when checking for opposite subtrees to point us in the right direction of
-      traversal. As you read this code the role of the flag will become clearer.
+    Step 2: Check if Query is on left or right side of subRoot[dim]. 
+      We will recurse onto whichever side it's on.
   */
-  int leftFlag = 0;
-  if(smallerDimVal(query, currentBest, dimension) == true){
-    /*
-      Comparing the values at our current dimension with smallerDimVal, we determine whether or not we want to 
-        traverse the left subtree. If the currentBest is smaller, then we do not traverse the left. Otherwise, 
-        we traverse left.
-    */
-    //We need to check if the left subtree even exists, so...
-    if(subRoot->left == NULL){ //If left subtree does NOT exist, then we traverse right
-      /*
-        We want to pass through our same query, but this time we iterate/traverse down our tree with the right side.
-          We also need to increment the dimension but keep it within the bounds of Dim.
-      */
-      currentBest = FNNHelper(query, subRoot->right, (dimension + 1) % Dim);
-      //leftFlag = 0;
+
+  //Initialize a "nearest" point, set it to subRoot's point just in case recursion fails on both sides
+  Point<Dim> nearest = subRoot->point;
+  
+  //Also initialize a flag to indicate whether we (attempted) to traverse down the left subtree
+  bool leftFlag = false;
+
+
+  //Check if query is on left side or subRoot 
+  if(smallerDimVal(query, subRoot->point, dimension)){
+    //Note: we know that at LEAST one subroot exists. The code got past the base case.
+    if(subRoot->left == NULL){ //If our left subtree doesn't exist, recurse down right side
+      nearest = FNNHelper(query, subRoot->right, (dimension + 1) % Dim);
     }
-    else{ //Otherwise, we traverse down the left
-      currentBest = FNNHelper(query, subRoot->left, (dimension + 1) % Dim);
-      //Since we're traversing left, we also need to set our flag to be true
-      //leftFlag = 1;
+    else{ //Otherwise recurse down left
+      nearest = FNNHelper(query, subRoot->left, (dimension + 1) % Dim);  
     }
-    leftFlag = 1;
+    //Indicate that we attempted to traverse down left side, set bool
+    leftFlag = true;
   }
-  else { //Else, we decide to traverse right
-    //Check to see if right side even exists
+  else{
     if(subRoot->right == NULL){
-      //Right subroot does not exist, so traverse left
-      currentBest = FNNHelper(query, subRoot->left, (dimension + 1) % Dim);
-      //leftFlag = 1;
+      nearest = FNNHelper(query, subRoot->left, (dimension + 1) % Dim);
     }
     else{
-      //Right subroot exists, so traverse right
-      currentBest = FNNHelper(query, subRoot->right, (dimension + 1) % Dim);
-      //leftFlag = 0;
+      nearest = FNNHelper(query, subRoot->right, (dimension + 1) % Dim);
     }
-    leftFlag = 0;
+    leftFlag = false;
   }
-
   /*
-    At this point, we have found the "current best" neighbor, or the point bound by the lowest-bound 
-      hyperrectangle. We now work our way back up and keep comparing distances using Euclidian Distance.
-
-    Currently, currentBest is the lowest-bound point in the hyperrectangle, but not necessarily the actual 
-      "best" point for our query. However, since we're traversing back upwards we compare our "current best"
-      to the point stored in our subRoot, which is effectively our "current point".
+    Step 3: Now we check to see if our current point at our subRoot is closer than the "nearest" 
+      point that we have recursed to find, i.e. if any other points lower in the tree are a 
+      better fit than the point rooted at our subRoot.
   */
-
-  if(shoudReplace(query, currentBest, subRoot->point) == true){
-    //We replace our "current best" with our "current point" if we find it to be necessary
-    currentBest = subRoot->point;
+  //Now check if current point at subRoot is closer than our "nearest" point that we found
+  if(shouldReplace(query, nearest, subRoot->point)){
+    nearest = subRoot->point;
   }
-
-  //Now we want to calculate the radius of our point to compare it with any other points. Achieve this using
-  //  Euclidian distance method
-  int radius = 0;
-  //Iterate through each dimension, get the square of the distance in that dimension to calculate the radius
-  //  of that dimension
+  /*
+    Step 4: We want to check if any other subtrees exist within the "radius" of our nearest and query.
+      If so, then those subTrees could also potentially contain better points, and we need to search 
+      them too. We compare the radius to the splitting distance.
+  */
+  double radius = 0; 
   for(int i = 0; i < Dim; i++){
-    radius = radius + (query[i] - currentBest[i]) * (query[i] - currentBest[i]);
+    radius = radius + (query[i] - nearest[i]) * (query[i] - nearest[i]);
   }
+  double splitDistance = (query[dimension] - subRoot->point[dimension]) * (query[dimension] - subRoot->point[dimension]);
 
-  /*
-    We also want to calculate the splitting distance to check if it could contain another subtree. If the splitting
-      distance is lower than the radius, then we also need to check the opposite subtree to see if any points
-      would be more viable.
-  */
-
-  auto splitDistance = (subRoot->point[dimension] - query[dimension]) * (subRoot->point[dimension] - query[dimension]);
-
-  /*
-    Now we check if the splitDistance is less than the radius. If that's true, then subtree contained within the
-      splitDistance could hold better points, and we woud need to search those trees too.
-  */
-  if(splitDistance <= radius){
+  Point<Dim> otherPoint;
+  if(radius >= splitDistance){
     /*
-      This is where our flag comes in handy: we use it to check which subtree we have already traversed, and
-        traverse the opposite subtree instead. We create a pointer to our new subtree called "newSubTree", and
-        set it according to our flag.
+      Our radius is larger than our splitDistance, indicating that the splitDistance is INCLUDED within
+        the radius and thus requiring us to check the opposite subtree. Check to see if the opposite subtree
+        exists before attempting to find the point down the subtree. We can also determine beforehand which
+        subtree we need to traverse.
     */
-    KDTreeNode* newSubTree = NULL;
-    if(leftFlag == 1){ 
-      /*
-        If this is true, that means we previously traversed down the left side. Perform the same checks and 
-          traverse recursively.
-      */
-      newSubTree = subRoot->right;
+    KDTreeNode* otherSubtree;
+    Point<Dim> otherBest;
+    if(leftFlag == true){
+      otherSubtree = subRoot->right;
     }
     else{
-      newSubTree = subRoot->left;
+      otherSubtree = subRoot->left;
     }
-
-    //We need to check if the newSubTree is NULL. If so, then we can just return currentBest, as there are no other
-    //  subtrees to check and currentBest is the best possible point.
-    if(newSubTree == NULL){
-      return currentBest;
-    }
-    else{ 
-      //newSubTree is NOT null, indicating that another subTree exists, thus we need to traverse that subTree and
-      //  get whatever point is the most viable out of it using our helper function's recursive functionality.
-      Point<Dim> otherTreeBest = FNNHelper(query, newSubTree, (dimension + 1) % Dim);
-      //Now that we've gotten the another viable point, we finally compare our two points and see if 
-      //  the new point is more viable than the first point.
-      if(shouldReplace(query, currentBest, otherTreeBest) == true){
-        currentBest = otherTreeBest;
+    if(otherSubtree != NULL){
+      otherBest = FNNHelper(query, otherSubtree, (dimension + 1) % Dim);
+      if(shouldReplace(query, nearest, otherBest)){
+        nearest = otherBest;
       }
     }
-    return currentBest;
+    else{
+      return nearest;
+    }
   }
+  return nearest;
+
 
 } //EoF
 
@@ -378,7 +346,7 @@ Point<Dim>& KDTree<Dim>::quickSelect(vector<Point<Dim>>& list, unsigned dimensio
   } //Eo IF 
 
   //k is our pivot index, follow AMA slides...
-  unsigned pivotIndex = k;
+  unsigned pivotIndex = (left + right)/2;
   //Reassign the pivotIndex to be the output of our partition helper function
   //By calling partition, we sort the list within our bounds and return the index which divides the two groups
   pivotIndex = partition(list, dimension, left, right, pivotIndex);
@@ -514,4 +482,4 @@ void KDTree<Dim>::KDTreeDeletion(KDTreeNode* subRoot)
   delete subRoot;
   //Now we need to set subRoot to NULL in order to achieve recursion / update our pointers to be accurate
   subRoot = NULL;
-}
+} //EoF

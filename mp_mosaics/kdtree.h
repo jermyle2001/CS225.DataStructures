@@ -278,7 +278,7 @@ class KDTree
     void KDTreeCopy(KDTreeNode* thisSubroot, KDTreeNode* otherSubroot);
 
     void KDTreeDeletion(KDTreeNode* subRoot);
-    Point<Dim> FNNHelper(const Point<Dim> & query, KDTreeNode* subRoot, int dimension);
+    Point<Dim> FNNHelper(const Point<Dim> & query, KDTreeNode* subRoot, int dimension) const;
 };  
 
 
