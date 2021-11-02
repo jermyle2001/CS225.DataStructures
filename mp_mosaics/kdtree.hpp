@@ -15,11 +15,25 @@ bool KDTree<Dim>::smallerDimVal(const Point<Dim>& first,
     /**
      * @todo Implement this function!
      */
+    /*
+      We want to compare the dimensions' values, and we can use the Point class's
+      [] operator to do so. However, if there is a tie, it should be decided using
+      the Point class's < operator.
 
+      This function checks to see if the first point has a smaller value at the
+      given dimension than the second point.
+    */
     if(second[curDim] == first[curDim]){
+      /*
+        Tie case: use Point's < operator to tiebreak. Implementing this first can
+        reduce the amount of code needed.
+      */
       return first < second;
     }
     else{
+      /*
+        Default case: just return first < second.
+      */
       return first[curDim] < second[curDim];
     }
 
@@ -33,6 +47,11 @@ bool KDTree<Dim>::shouldReplace(const Point<Dim>& target,
     /**
      * @todo Implement this function!
      */
+
+    /*
+      This function square the points' distances from the base point, 
+      comparing the points using the same method as above.
+    */
     //Sum squared dim value differences
     double currentSum = 0;
     double potentialSum = 0;
@@ -61,19 +80,17 @@ KDTree<Dim>::KDTree(const vector<Point<Dim>>& newPoints)
       We are passed in a vector of points that is Const (cannot be changed). We need to organize the tree/vector
         to be consistent with our definition of a k-d tree.
     */
-   //Set size to 0, since we are constructing a new tree
-   //We want to use the points in newPoints to create our new tree, but it's passed through with a const.
-   //Now build new tree using helper function. We start at dimension 0, with left being at the very start
-   // and right being at the very end, which is the same as pointsVector.size() - 1
+
+   /*
+      We can implement the constructor by using a helper function that passes in more useful variables. Follow
+      the AMA slides to accomlish this.
+   */
    if(newPoints.empty()){
      root = NULL;
      size = 0;
    }
    buildTree(newPoints, 0, 0, newPoints.size() - 1, root);
    size = newPoints.size();
-   if(root == NULL){
-     std::cout << "The root is NULL!" << std::endl;
-   }
 }
 
 template <int Dim>
@@ -90,7 +107,7 @@ KDTree<Dim>::KDTree(const KDTree<Dim>& other) {
   //  and begin copying via our subroutine. We should also update the size to be consistent.
 
   //Copy over tree via our copy subroutine
-  copy(this->root, other.root);
+  KDTreeCopy(this->root, other.root);
   //Update the size of our tree
   size = other.size;
 } //EoF
@@ -108,7 +125,7 @@ const KDTree<Dim>& KDTree<Dim>::operator=(const KDTree<Dim>& rhs) {
   if(this != &rhs){
     KDTreeDeletion(root);
     //Now copy over the new tree
-    copy(this->root, rhs.root);
+    KDTreeCopy(this->root, rhs.root);
     //Also update the size of our root
     size = rhs.size;
   }
