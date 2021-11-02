@@ -295,7 +295,7 @@ int KDTree<Dim>::partition(vector<Point<Dim>>& list, int dimension, int left, in
   //Now we want to store our index 
   int storeIndex = left;
   //Iterate through entire list, sorting the values into two groups
-  for(int i = left; i < right - 1; i++){
+  for(int i = left; i < right; i++){
     //Check if current value is less than the pivotValue. If so, we will swap it
     //with the value at storeIndex.
     if(smallerDimVal(list[i], pivotValue, dimension)){
