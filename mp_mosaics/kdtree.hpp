@@ -16,15 +16,11 @@ bool KDTree<Dim>::smallerDimVal(const Point<Dim>& first,
      * @todo Implement this function!
      */
 
-    if(second[curDim] < first[curDim]){
-      return false;
-    }
-    else if(first[curDim] < second[curDim]){
-      return true;
+    if(second[curDim] == first[curDim]){
+      return first < second;
     }
     else{
-      return(first < second);
-
+      return first[curDim] < second[curDim];
     }
 
 } //EoF
@@ -46,14 +42,11 @@ bool KDTree<Dim>::shouldReplace(const Point<Dim>& target,
       currentSum = currentSum + currentDistance;
       potentialSum = potentialSum + potentialDistance;
     }
-    if(potentialSum < currentSum){
-      return true;
-    }
-    else if(currentSum < potentialSum){
-      return false;
+    if(currentSum == potentialSum){
+      return potential < currentBest;
     }
     else{
-      return (potential < currentBest);
+      return potentialSum < currentSum;
     }
 } //EoF
 
@@ -69,15 +62,14 @@ KDTree<Dim>::KDTree(const vector<Point<Dim>>& newPoints)
         to be consistent with our definition of a k-d tree.
     */
    //Set size to 0, since we are constructing a new tree
-   size = 0;
-   //We want to use the points in newPoints to create our new tree, but it's passed through with a const. Thus,
-   // we need to copy the vector over using the .assign() feature.
-   vector<Point<Dim>> pointsVector;
-   //Assign all values in vector by using .begin() and .end()
-   pointsVector.assign(newPoints.begin(), newPoints.end());
+   //We want to use the points in newPoints to create our new tree, but it's passed through with a const.
    //Now build new tree using helper function. We start at dimension 0, with left being at the very start
    // and right being at the very end, which is the same as pointsVector.size() - 1
-   root = buildTree(pointsVector, 0, 0, pointsVector.size() - 1);
+   if(newPoints.empty()){
+     root = NULL;
+     size = 0;
+   }
+   buildTree(newPoints, 0, 0, newPoints.size() - 1, root);
    size = newPoints.size();
    if(root == NULL){
      std::cout << "The root is NULL!" << std::endl;
@@ -254,19 +246,23 @@ Point<Dim> KDTree<Dim>::FNNHelper(const Point<Dim> & query, KDTreeNode* subRoot,
     KDTreeNode* otherSubtree;
     Point<Dim> otherBest;
     if(leftFlag == true){
-      otherSubtree = subRoot->right;
-    }
-    else{
-      otherSubtree = subRoot->left;
-    }
-    if(otherSubtree != NULL){
-      otherBest = FNNHelper(query, otherSubtree, (dimension + 1) % Dim);
-      if(shouldReplace(query, nearest, otherBest)){
-        nearest = otherBest;
+      if(subRoot->right != NULL){
+        otherBest = FNNHelper(query, subRoot->right, (dimension + 1) % Dim);
+      }
+      else{
+        otherBest = FNNHelper(query, subRoot->left, (dimension + 1) % Dim);
       }
     }
     else{
-      return nearest;
+      if(subRoot->left != NULL){
+        otherBest = FNNHelper(query, subRoot->left, (dimension + 1) % Dim);
+      }
+      else{
+        otherBest = FNNHelper(query, subRoot->right, (dimension + 1) % Dim);
+      }
+    }
+    if(shouldReplace(query, nearest, otherBest)){
+      nearest = otherBest;
     }
   }
   return nearest;
@@ -277,7 +273,7 @@ Point<Dim> KDTree<Dim>::FNNHelper(const Point<Dim> & query, KDTreeNode* subRoot,
 
 
 template <int Dim>
-unsigned KDTree<Dim>::partition(vector<Point<Dim>>& list, unsigned dimension, unsigned left, unsigned right, unsigned pivotIndex)
+int KDTree<Dim>::partition(vector<Point<Dim>>& list, int dimension, int left, int right, int pivotIndex)
 {
   /*
     The partition helper function is part of the QuickSelect function. It divides a list into two parts, grouped
@@ -289,23 +285,23 @@ unsigned KDTree<Dim>::partition(vector<Point<Dim>>& list, unsigned dimension, un
   */
 
   //Get value at pivotIndex in list
-  auto pivotValue = list[pivotIndex];
+  Point<Dim> pivotValue = list[pivotIndex];
   //Get value on right side of list
-  auto rightValue = list[right];
+  Point<Dim> rightValue = list[right];
   //Swap the values in each index
   list[right] = pivotValue;
   list[pivotIndex] = rightValue;
 
   //Now we want to store our index 
-  auto storeIndex = left;
+  int storeIndex = left;
   //Iterate through entire list, sorting the values into two groups
-  for(auto i = left; i < right - 1; i++){
+  for(int i = left; i < right - 1; i++){
     //Check if current value is less than the pivotValue. If so, we will swap it
     //with the value at storeIndex.
     if(smallerDimVal(list[i], pivotValue, dimension)){
       //Swap values at index storeIndex and index i
-      auto storeVal = list[storeIndex];
-      auto iVal = list[i];
+      Point<Dim> storeVal = list[storeIndex];
+      Point<Dim> iVal = list[i];
       list[storeIndex] = iVal;
       list[i] = storeVal;
       //Now increment storeIndex
@@ -318,7 +314,7 @@ unsigned KDTree<Dim>::partition(vector<Point<Dim>>& list, unsigned dimension, un
 
   //Swap list[storeIndex] and list[right]
   rightValue = list[right];
-  auto storeVal = list[storeIndex];
+  Point<Dim> storeVal = list[storeIndex];
   list[storeIndex] = rightValue;
   list[right] = storeVal;
   
@@ -329,7 +325,7 @@ unsigned KDTree<Dim>::partition(vector<Point<Dim>>& list, unsigned dimension, un
 } //EoF
 
 template <int Dim>
-Point<Dim>& KDTree<Dim>::quickSelect(vector<Point<Dim>>& list, unsigned dimension, unsigned left, unsigned right, unsigned k)
+Point<Dim>& KDTree<Dim>::quickSelect(vector<Point<Dim>>& list, int dimension, int left, int right, int k)
 {
   /*
     The following helper function selects/returns the smallest k-th dimension element of the list 
@@ -346,7 +342,7 @@ Point<Dim>& KDTree<Dim>::quickSelect(vector<Point<Dim>>& list, unsigned dimensio
   } //Eo IF 
 
   //k is our pivot index, follow AMA slides...
-  unsigned pivotIndex = (left + right)/2;
+  int pivotIndex = (left + right)/2;
   //Reassign the pivotIndex to be the output of our partition helper function
   //By calling partition, we sort the list within our bounds and return the index which divides the two groups
   pivotIndex = partition(list, dimension, left, right, pivotIndex);
@@ -358,18 +354,17 @@ Point<Dim>& KDTree<Dim>::quickSelect(vector<Point<Dim>>& list, unsigned dimensio
     return list[k];
   }
   else if(k < pivotIndex){
-    right = pivotIndex - 1; //We increment our margins to narrow down the location of our smallest element
+    return quickSelect(list, dimension, left, pivotIndex - 1, k);
   }
   else{
-    left = pivotIndex + 1;
+    return quickSelect(list, dimension, pivotIndex + 1, right, k);
   }
-  return quickSelect(list, dimension, left, right, k);
 
 } //EoF
 
 //Implement a treebuilder function
 template <int Dim>
-typename KDTree<Dim>::KDTreeNode* KDTree<Dim>::buildTree(vector<Point<Dim>>& pointsList, int dimension, unsigned left, unsigned right)
+void KDTree<Dim>::buildTree(vector<Point<Dim>> pointsList, int dimension, int left, int right, KDTreeNode* &subRoot)
 {
   /*
     Function will operate recursively, following AMA slide. In essence, we continue building the tree until there
@@ -397,45 +392,17 @@ typename KDTree<Dim>::KDTreeNode* KDTree<Dim>::buildTree(vector<Point<Dim>>& poi
   //Base cases:
   //Check if the vector is empty, OR if our left and right bounds are valid. If so, we return NULL to indicate
   //  that an error occurred when constructing the tree.
-  if(pointsList.empty() == true /* check to see if we have any points left */
-     || left < 0 /* if left < 0, then our bounds have broken */
-     || left >= pointsList.size()  /* 
-                                     if either or bounds exceeds the size of our vector, then something wrong has 
-                                     occurred.
-                                   */
-     || right < 0
-     || right >= pointsList.size()
-    ){
-     return NULL; //Base case reached, return NULl to indicate either that we are done or an error occurred
-  }
-
   /*
     Additionally check to see if our right and left bounds are valid - i.e. that right > left
   */
-  if(left > right){
-    return NULL; //Bounds are broken, return NULL
+  if(left <= right){
+    int middleIndex = (left + right) / 2;
+    Point<Dim> midPoint = quickSelect(pointsList, dimension, left, right, middleIndex);
+    subRoot = new KDTreeNode(midPoint);
+    buildTree(pointsList, (dimension + 1) % Dim, left, middleIndex - 1, subRoot->left);
+    buildTree(pointsList, (dimension + 1) % Dim, middleIndex + 1, right, subRoot->right);
   }
   //Base cases established, now continue with algorithm outlined in AMA slides
-
-  //Calculate median index
-  auto medianIndex = (left + right) / 2;
-  //Create new node at middle/median of quickSelected list
-  KDTreeNode* newSubroot = new KDTreeNode(quickSelect(pointsList, dimension % Dim, left, right, medianIndex));
-  //Update parameters of our KDTree
-  //Update the size of our tree, since we just added a new node
-  size = size + 1;
-  //Update / reset the dimension of the tree that we have been constructing on
-  auto newDimension = dimension + 1;
-  newDimension = newDimension % Dim;
-
-  //Set the node's left and rights via recursion
-  /*
-    We will split our left and right trees using the median index and the left and right bounds. We do not include
-      our medianIndex because it was used as our subRoot.
-  */
- newSubroot->left = buildTree(pointsList, newDimension, left, medianIndex - 1);
- newSubroot->right = buildTree(pointsList, newDimension, medianIndex + 1, right);
- return newSubroot;
 
 } //EoF
 
