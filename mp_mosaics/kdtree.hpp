@@ -417,11 +417,14 @@ void KDTree<Dim>::KDTreeCopy(KDTreeNode* thisSubroot, KDTreeNode* otherSubroot)
       3. The new subroot then sets its left and right subroots, traversing until it gets to the end of each 
           series of lefts and rights
   */
+  if(otherSubroot == NULL){
+    return;
+  }
   thisSubroot = new KDTreeNode(); //Constructed treenode is empty, need to copy over data
   thisSubroot->point = otherSubroot->point; //Copy over data 
   //Now we set our left and rights via recursion. We pass in subroot->left/right to set our pointers
-  copy(thisSubroot->left, otherSubroot->left);
-  copy(thisSubroot->right, otherSubroot->right);
+  KDTreeCopy(thisSubroot->left, otherSubroot->left);
+  KDTreeCopy(thisSubroot->right, otherSubroot->right);
 }
 
 template <int Dim>
