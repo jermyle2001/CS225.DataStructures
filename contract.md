@@ -65,3 +65,6 @@ Group Members:
  
  Thus concludes the Final Project Contract for the group JUSTIN FIELDS.
  Below are the signatures of each member.
+ 
+ SIGNATURES:
+ Jeremy Lee - 11/3/2021
