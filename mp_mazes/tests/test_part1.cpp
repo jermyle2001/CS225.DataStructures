@@ -43,12 +43,19 @@ TEST_CASE("testFindAndSetUnion2", "[weight=10][part1]")
 	disjSets.addelements(10);
 
 	disjSets.setunion(4, 8);
+	
 	disjSets.setunion(1, 3);
+
 	disjSets.setunion(1, 5);
+
 	disjSets.setunion(8, 3);
+	
 	disjSets.setunion(6, 7);
+	
 	disjSets.setunion(2, 8);
+
 	disjSets.setunion(7, 1);
+
 
 	int root = disjSets.find(1);
 	for (int i = 2; i <= 8; i++)
