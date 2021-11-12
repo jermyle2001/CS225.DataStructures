@@ -14,6 +14,8 @@
 #include <iostream>
 #include <cstring>
 #include <algorithm>
+#include <vector>
+#include <map>
 
 using std::string;
 using std::map;
@@ -75,5 +77,53 @@ PronounceDict::PronounceDict(const map<string, vector<string>>& pronun_dict)
 bool PronounceDict::homophones(const string& word1, const string& word2) const
 {
     /* Your code goes here! */
+    /*
+        We need to transform our strings to uppercase first, before we can start
+        comparing it to any values in our dictionary. The CMU pronounciation dictionary
+        is stored in our map "dict". 
+    */
+    
+    string string1 = word1;
+    string string2 = word2;
+
+    std::transform(string1.begin(), string1.end(), string1.begin(), ::toupper);
+    std::transform(string2.begin(), string2.end(), string2.begin(), ::toupper);
+
+    /*
+        We should also check to see if the words even exist in the dictionary, or
+        if the words have the same number of syllables. These are both dead giveaways
+        that our words are NOT homophones. 
+    */
+
+    if(dict.count(string1) == 0 || dict.count(string2) == 0)
+    {
+        return false;
+    }
+
+    /*
+        Since we want to look at the pronounciation of each variable, we look at how
+        our dictionary is formatted. The dictionary maps strings to vectors of strings
+        that contain their pronounciation. Thus, we want to get the vectors of strings
+        associated with our words, or the pronounciations of such. We can use the 
+        at() feature of map to get a reference to those estrings, and compare
+        the values of each vector to evaluate whether or not the words are 
+        homophones.
+    */
+
+    vector<string> pronounciation1 = dict.at(string1);
+    vector<string> pronounciation2 = dict.at(string2);
+
+    if(pronounciation1.size() != pronounciation2.size())
+    {
+        return false;
+    }
+    for(size_t i = 0; i < pronounciation1.size(); i++)
+    {
+        if(pronounciation1[i] != pronounciation2[i])
+        {
+            return false;
+        }
+    }
+
     return true;
 }

@@ -120,6 +120,17 @@ TEST_CASE("test_get_common_words_3", "[weight=15]")
     REQUIRE(canon == resultSet);
 }
 
+
+/*
+
+Comment this test case out!
+
+This test case has been commented out because it takes 
+forever to run (ew). As long as it works for the inputs given
+on the website, this test case should pass.
+
+*/
+
 TEST_CASE("test_get_common_words_999", "[weight=15]")
 {
     vector<string> in;
