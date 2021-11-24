@@ -28,17 +28,18 @@ class SquareMaze
         DisjointSets cycleDetector;
         vector<pair<bool, bool>> wallsVect;
         /*
-            In our wallsVect, the first bool represents the left wall, and
-            the second bool represents the right wall. It is "true" if a 
+            In our wallsVect, the first bool represents the right wall, and
+            the second bool represents the bottom wall. It is "true" if a 
             wall exists between the two.
         */
 
     public:
+        SquareMaze();
         void makeMaze(int width, int height);
         bool canTravel(int x, int y, int dir) const;
         void setWall(int x, int y, int dir, bool exists);
         vector<int> solveMaze();
-        PNG* drawMaze();
+        PNG* drawMaze() const;
         PNG* drawMazeWithSolution();
 
 };
