@@ -8,251 +8,195 @@ using cs225::HSLAPixel;
 using cs225::PNG;
 
 StickerSheet::StickerSheet(const Image &picture, unsigned max){
- svector.resize(max);
- svector.clear();
- x_val.resize(max);
- y_val.resize(max);
- std::cout << "svector.size() = " << svector.size() << std::endl;
- unsigned w = picture.width();
- unsigned h = picture.height();
- baseImage.resize(w, h);
- for(unsigned i = 0; i < w; i++){
-  for(unsigned j = 0; j < h; j++){
-   HSLAPixel &pixel = baseImage.getPixel(i, j);
-   pixel = picture.getPixel(i, j);
-  }
- }
+ baseImage = new Image(picture);
+ svector.resize(max, NULL);
+ x_val.resize(max, 0);
+ y_val.resize(max, 0);
+ sheetSize = 0;
 } //End of constructor
 
-StickerSheet::~StickerSheet(){
- unsigned s = svector.size();
- for(unsigned i = s; i >= 0 ; i--){
-  if(svector[i] != NULL){
-   delete svector[i];
-   svector.pop_back();
-  }
+/*
+  We actually want to use a helper function clear to achieve the
+   = operator, so that we can minimize the amount
+  of work that we need to do.
+*/
+void StickerSheet::clearSheet()
+{
+ for(unsigned i = 0; i < svector.size(); i++)
+ {
+   if(svector[i] != NULL)
+   {
+     delete svector[i];
+     svector[i] = NULL;
+   }
  }
+ delete baseImage;
+}
+
+StickerSheet::~StickerSheet(){
+ clearSheet();
 } //End of deconstructor
 
-StickerSheet::StickerSheet(const StickerSheet &other){
- unsigned s = other.svector.size();
- svector.resize(s);
- svector.clear();
- x_val.resize(s);
- y_val.resize(s);
- unsigned w = other.baseImage.width();
- unsigned h = other.baseImage.height();
- baseImage.resize(w, h);
- for(unsigned i = 0; i < s; i++){
-  if(other.svector[i] != NULL){
-   svector.push_back(new Image);
-   w = other.svector[i]->width();
-   h = other.svector[i]->height();
-   svector[i]->resize(w, h);
-   for(unsigned x = 0; x < w; x++){
-    for(unsigned y = 0; y < h; y++){
-     HSLAPixel & pixel = svector[i]->getPixel(x,y);
-     pixel = other.svector[i]->getPixel(x,y);
-    }
-   }
-   x_val[i] = other.x_val[i];
-   y_val[i] = other.y_val[i];
-  }
- }
-//Now copy base picture
- w = baseImage.width();
- h = baseImage.height();
- for(unsigned x = 0; x < w; x++){
-  for(unsigned y = 0; y < h; y++){
-    HSLAPixel & pixel = baseImage.getPixel(x,y);
-    pixel = other.baseImage.getPixel(x,y);
-   }
+/*
+  We actually want to use a helper function copy to achieve the
+  copy constructor and = operator, so that we can minimize the amount
+  of work that we need to do.
+*/
 
-  } 
- 
+void StickerSheet::copy(const StickerSheet & other)
+{
+  baseImage = new Image(*(other.baseImage));
+  svector.resize(other.svector.size(), NULL);
+  x_val.resize(other.x_val.size(), 0);
+  y_val.resize(other.y_val.size(), 0);
+  for(unsigned i = 0; i < other.svector.size(); i++)
+  {
+    if(other.svector[i] == NULL)
+    {
+      continue;
+    }
+    //Copy over sticker and its coordinates
+    Image* sticker = new Image(*(other.svector[i]));
+    svector[i] = sticker;
+    x_val[i] = other.x_val[i];
+    y_val[i] = other.y_val[i];
+ }
+ sheetSize = other.sheetSize;
+}
+
+StickerSheet::StickerSheet(const StickerSheet &other){
+ copy(other);
 }; //End of copy constructor
 
 const StickerSheet& StickerSheet::operator=(const StickerSheet & other){
- if(this != &other){
- unsigned s = other.svector.size();
- for(unsigned i = 0; i < s; i++){
-  delete svector[i];
- }
- svector.resize(s);
- svector.clear();
- x_val.resize(s);
- y_val.resize(s);
- unsigned w = other.baseImage.width();
- unsigned h = other.baseImage.width();
- baseImage.resize(w, h);
- for(unsigned i = 0; i < s; i++){
-  if(other.svector[i] != NULL){
-  svector.push_back(new Image);
-  w = other.svector[i]->width();
-  h = other.svector[i]->height();
-  svector[i]->resize(w, h);
-  for(unsigned x = 0; x < w; x++){
-   for(unsigned y = 0; y < h; y++){
-    HSLAPixel & pixel = svector[i]->getPixel(x,y);
-    pixel = other.svector[i]->getPixel(x,y);
-   }
-  }
-  x_val[i] = other.x_val[i];
-  y_val[i] = other.y_val[i];
- }
- }
-}
-/*
- w = baseImage.width();
- h = baseImage.height();
- for(unsigned x = 0; x < w; x++){
-  for(unsigned y = 0; y < h; y++){
-   HSLAPixel & pixel = baseImage.getPixel(x,y);
-   pixel = other.baseImage.getPixel(x,y);
-  }
- } 
-*/
-
-return *this;
+ clearSheet();
+ copy(other);
+ return *this;
 } //End of assignment operator
 
 void StickerSheet::changeMaxStickers(unsigned max){
- unsigned s = svector.size();
- if(max < s){
-  while(s > max){
-  if(svector[s] != NULL){
-  delete svector[s-1];
-  svector.pop_back();
-  s--;
-  }
-  }
+ if(max == svector.size())
+ {
+   return;
  }
- svector.resize(max);
- x_val.resize(max);
- y_val.resize(max);
+ else if(max < svector.size())
+ {
+   unsigned size = svector.size();
+   for(unsigned i = size - 1; i > max - 1; i--)
+   {
+     if(svector[i] != NULL)
+     {
+       delete svector[i];
+     }
+     svector.pop_back();
+     x_val.pop_back();
+     y_val.pop_back();
+   }
+ }
+ else
+ { 
+   unsigned size = svector.size();
+   for(unsigned i = 0; i < max - size; i++)
+   {
+     svector.push_back(NULL);
+     x_val.push_back(0);
+     y_val.push_back(0);
+   }
+ }
 
 } //End of changeMaxStickers
 
 int StickerSheet::addSticker(Image &sticker, unsigned x, unsigned y){
- std::cout << "addSticker: original size() = " << svector.size() << std::endl;
- unsigned s = svector.size();
- unsigned cap = svector.capacity();
- if(s == cap){
- std::cout << "addSticker: vector full. Terminating operation." << std::endl;
-  return -1;
+ if(svector.size() >= svector.max_size())
+ {
+   return -1;
  }
- svector.push_back(new Image);
- unsigned w = sticker.width();
- unsigned h = sticker.height();
- svector[s]->resize(w, h);
- x_val[s] = x;
- y_val[s] = y;
- for(unsigned i = 0; i < w; i++){
-  for(unsigned j = 0; j < h; j++){
-  HSLAPixel & pixel = svector[s]->getPixel(i, j);
-  pixel = sticker.getPixel(i, j);
-  }
+ //Find available index for insertion
+ unsigned i;
+ for(i = 0; i < svector.size(); i++)
+ {
+   if(svector[i] == NULL)
+   {
+     break;
+   }
  }
- std::cout << "addSticker: new size() = " << svector.size() << std::endl;
- return s;
+ Image* newSticker = new Image(sticker);
+ svector[sheetSize] = newSticker;
+ x_val[sheetSize] = x;
+ y_val[sheetSize] = y;
+ sheetSize++;
+ return i;
 } //End of addSticker
 
 bool StickerSheet::translate(unsigned index, unsigned x, unsigned y){
- unsigned s = svector.size();
- if(index > s-1){ //Zero-based index
-  return false;
+ if(svector[index] == NULL)
+ {
+   return false;
  }
  x_val[index] = x;
  y_val[index] = y;
-
  return true;
 } //End of translate
 
 void StickerSheet::removeSticker(unsigned index){
- unsigned s = svector.size();
+ if(index >= svector.size())
+ {
+   return;
+ }
  delete svector[index];
- for(unsigned i = index; i < s-1; i++){
- svector[i] = svector[i + 1];
- x_val[i] = x_val[i + 1];
- y_val[i] = y_val[i + 1];
+ for(unsigned i = index + 1; i < svector.size(); i++)
+ {
+   svector[i - 1] = svector[i];
+   x_val[i - 1] = x_val[i];
+   y_val[i - 1] = y_val[i];
  }
  svector.pop_back();
+ svector.push_back(NULL);
+ x_val.pop_back();
+ x_val.push_back(0);
+ y_val.pop_back();
+ y_val.push_back(0);
 } //End of removeSticker
 
 Image* StickerSheet::getSticker(unsigned index){
- unsigned s = svector.size();
- if(index > s - 1){
-  return NULL;
+ if(index >= svector.size())
+ {
+   return NULL;
  }
  return svector[index];
-
-
 } //End of getSticker
 
 Image StickerSheet::render() const{ 
- std::cout << "Creating base image..." << std::endl;
- Image finalImage;
- unsigned w = baseImage.width();
- unsigned h = baseImage.height();
- finalImage.resize(w, h);
- for(unsigned x = 0; x < w; x++){
-  for(unsigned y = 0; y < h; y++){
-   HSLAPixel & pixel = finalImage.getPixel(x,y);
-   pixel = baseImage.getPixel(x,y);
-  } //End of inner loop
- } //End of outer loop (baseImage)
-
- std::cout << "Base image created. Creating stickers..." << std::endl;
- unsigned s = svector.size();
- for(unsigned int z = 0; z < s; z++){
-  //Resize baseImage if necessary
-  if(svector[z] == NULL){
-   std::cout << "svector at index [" << z << "] is empty. Breaking loop..." << std::endl;
-   break;
-  }
-  std::cout << "Gathering border data..." << std::endl;
-  unsigned stickw = svector[z]->width();
-  unsigned stickh = svector[z]->height();
-  unsigned xcoord = x_val[z];
-  unsigned ycoord = y_val[z];
-  std::cout << "stickw = " << stickw << " | stickh = " << stickh << " | xcoord = " << xcoord << " | ycoord = " << ycoord << " | w = " << w << " | h = " << h << std::endl;
-  if(xcoord + stickw > w){
-   if(ycoord + stickh > w){
-    finalImage.resize(xcoord + stickw, ycoord + stickh);
-   std::cout << "Resizing baseImage to fit stickers" << std::endl;
-   }
-   else{
-    finalImage.resize(xcoord + stickw, h);
-   std::cout << "Resizing baseImage to fit stickers" << std::endl;
-   }
-  }
-  else if(ycoord + stickh > w){
-   finalImage.resize(w, ycoord + stickh);
-   std::cout << "Resizing baseImage to fit stickers" << std::endl;
-  }
-  std::cout << "baseImage resized. Printing stickers..." << std::endl; 
-  w = finalImage.width();
-  h = finalImage.height();
-std::cout << "stickw = " << stickw << " | stickh = " << stickh << " | xcoord = " << xcoord << " | ycoord = " << ycoord << " | w = " << w << " | h = " << h << std::endl;
-  for(unsigned x = 0; x < stickw; x++){
-   for(unsigned y = 0; y < stickh; y++){
-   HSLAPixel & pixel = finalImage.getPixel(x + xcoord, y + ycoord);
-   HSLAPixel & spixel = svector[z]->getPixel(x, y);
-   if(spixel.a == 0){
-    continue;
+ /*
+    Create base image, and then paste stickers onto base image.
+ */
+  Image out(*baseImage);
+  for(unsigned i = 0; i < svector.size(); i++)
+  {
+    Image* sticker = svector[i]; 
+    if(sticker != NULL){
+    unsigned stickerX = x_val[i];
+    unsigned stickerY = y_val[i];
+    if(stickerX + sticker->width() >= out.width())
+    {
+      out.resize(stickerX + sticker->width(), out.height());
     }
-   pixel = spixel;
-   } //End of inner loop
-  } //End of middle loop
- } //End of outer loop
-
- return finalImage;
+    if(stickerY + sticker->height() >= out.height())
+    {
+      out.resize(out.width(), stickerY + sticker->height());
+    }
+    for(unsigned offsetX = 0; offsetX < sticker->width(); offsetX++)
+    {
+      for(unsigned offsetY = 0; offsetY < sticker->height(); offsetY++)
+      {
+        HSLAPixel & pixel = out.getPixel(stickerX + offsetX, stickerY + offsetY);
+        if(sticker->getPixel(offsetX, offsetY).a != 0){
+          pixel = sticker->getPixel(offsetX, offsetY);
+        }
+      }
+    }
+  }
+  }
+  return out;
 
 } //End of render()
-
-
-
-
-
-
-

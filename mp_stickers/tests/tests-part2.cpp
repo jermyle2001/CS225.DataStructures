@@ -3,6 +3,7 @@
 #include "../StickerSheet.h"
 #include "../cs225/PNG.h"
 #include "../cs225/HSLAPixel.h"
+#include <iostream>
 
 using namespace cs225;
 
@@ -21,10 +22,13 @@ TEST_CASE("A basic StickerSheet works", "[weight=5][part=2][timeout=30000][valgr
   Image i;    i.readFromFile("tests/i.png");
 
   StickerSheet sheet(alma, 5);
+
   sheet.addSticker(i, 20, 200);
 
   Image expected;
   expected.readFromFile("tests/expected.png");
+  Image result = sheet.render();
+  result.writeToFile("result.png");
 
   REQUIRE( sheet.render() == expected );
 }
